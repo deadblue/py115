@@ -1,0 +1,5 @@
+cryptography
+lz4
+pycryptodome
+pytz
+requests
