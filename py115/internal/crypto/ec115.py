@@ -28,10 +28,6 @@ _logger = logging.getLogger(__name__)
 
 class Cipher:
 
-    _pub_key: bytes = None
-    _aes_key: bytes = None
-    _aes_iv: bytes = None
-
     def __init__(self) -> None:
         # Use P-224 curve
         curve = ec.SECP224R1()
@@ -86,11 +82,21 @@ class Cipher:
             iv = self._aes_iv
         )
         plaintext = decrypter.decrypt(ciphertext)
-        # Decompress
+        # Get uncompress size
         for i in range(4):
             tail[i] = tail[i] ^ tail[7]
         dst_size, = struct.unpack('<I', tail[:4])
-        _logger.debug('Uncompress size: %d', dst_size)
-        src_size, = struct.unpack('<H', plaintext[:2])
-        plaintext = lz4.block.decompress(plaintext[2:src_size+2], dst_size)
-        return plaintext
+        # Decompress
+        buf = []
+        while dst_size > 0:
+            uncompressed_size = dst_size
+            if uncompressed_size > 8192:
+                uncompressed_size = 8192
+            src_size, = struct.unpack('<H', plaintext[:2])
+            buf.append(lz4.block.decompress(
+                plaintext[2:src_size+2], uncompressed_size
+            ))
+            # Move to next block
+            plaintext = plaintext[src_size+2:]
+            dst_size -= uncompressed_size
+        return buf[0] if len(buf) == 0 else b''.join(buf)
