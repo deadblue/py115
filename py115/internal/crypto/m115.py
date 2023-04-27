@@ -3,30 +3,8 @@ __author__ = 'deadblue'
 import base64
 import secrets
 
-_xor_key_seed = bytes([
-    0xf0, 0xe5, 0x69, 0xae, 0xbf, 0xdc, 0xbf, 0x8a,
-    0x1a, 0x45, 0xe8, 0xbe, 0x7d, 0xa6, 0x73, 0xb8,
-    0xde, 0x8f, 0xe7, 0xc4, 0x45, 0xda, 0x86, 0xc4,
-    0x9b, 0x64, 0x8b, 0x14, 0x6a, 0xb4, 0xf1, 0xaa,
-    0x38, 0x01, 0x35, 0x9e, 0x26, 0x69, 0x2c, 0x86,
-    0x00, 0x6b, 0x4f, 0xa5, 0x36, 0x34, 0x62, 0xa6,
-    0x2a, 0x96, 0x68, 0x18, 0xf2, 0x4a, 0xfd, 0xbd,
-    0x6b, 0x97, 0x8f, 0x4d, 0x8f, 0x89, 0x13, 0xb7,
-    0x6c, 0x8e, 0x93, 0xed, 0x0e, 0x0d, 0x48, 0x3e,
-    0xd7, 0x2f, 0x88, 0xd8, 0xfe, 0xfe, 0x7e, 0x86,
-    0x50, 0x95, 0x4f, 0xd1, 0xeb, 0x83, 0x26, 0x34,
-    0xdb, 0x66, 0x7b, 0x9c, 0x7e, 0x9d, 0x7a, 0x81,
-    0x32, 0xea, 0xb6, 0x33, 0xde, 0x3a, 0xa9, 0x59,
-    0x34, 0x66, 0x3b, 0xaa, 0xba, 0x81, 0x60, 0x48,
-    0xb9, 0xd5, 0x81, 0x9c, 0xf8, 0x6c, 0x84, 0x77,
-    0xff, 0x54, 0x78, 0x26, 0x5f, 0xbe, 0xe8, 0x1e,
-    0x36, 0x9f, 0x34, 0x80, 0x5c, 0x45, 0x2c, 0x9b,
-    0x76, 0xd5, 0x1b, 0x8f, 0xcc, 0xc3, 0xb8, 0xf5,
-])
+from py115.internal.crypto import _rsa, _xor
 
-_xor_client_key = bytes([
-    0x78, 0x06, 0xad, 0x4c, 0x33, 0x86, 0x5d, 0x18, 0x4c, 0x01, 0x3f, 0x46,
-])
 
 _ras_n = [
     0x86, 0x86, 0x98, 0x0c, 0x0f, 0x5a, 0x24, 0xc4, 
@@ -49,83 +27,7 @@ _ras_n = [
 
 _rsa_e = 0x10001
 
-
-def _xor_derive_key(seed: bytes, size: int) -> bytes:
-    key = bytearray(size)
-    for i in range(size):
-        key[i] = (seed[i] + _xor_key_seed[size * i]) & 0xff
-        key[i] ^= _xor_key_seed[size * (size - i - 1)]
-    return bytes(key)
-
-
-def _xor_transform(key: bytes, data: bytearray):
-    key_size, data_size = len(key), len(data)
-    mod_size = data_size % 4
-    for i in range(data_size):
-        if i < mod_size:
-            data[i] ^= key[i % key_size]
-        else:
-            data[i] ^= key[(i - mod_size) % key_size]
-    return
-
-
-class _RsaCipher():
-
-    def __init__(self, n: bytes, e: int) -> None:
-        self._n = int.from_bytes(n, 'big')
-        self._e = e
-        self._key_len = len(n)
-    
-    def _encrypt_slice(self, segment: bytes) -> bytes:
-        # Make pad
-        pad_size = self._key_len - len(segment)
-        pad_buf = bytearray(pad_size)
-        pad_buf[0], pad_buf[1] = 0, 2
-        for i in range(pad_size - 3):
-            pad_buf[2 + i] = secrets.randbelow(0xff) + 1
-        pad_buf[-1] = 0
-        msg = int.from_bytes(pad_buf + segment, 'big')
-        return pow(msg, self._e, self._n).to_bytes(self._key_len, 'big')
-
-    def encrypt(self, plaintext: bytes) -> bytes:
-        ciphertext = bytearray()
-        remain_size = len(plaintext)
-        while remain_size > 0:
-            slice_size = self._key_len - 11
-            if slice_size > remain_size:
-                slice_size = remain_size
-            ciphertext.extend(
-                self._encrypt_slice(plaintext[:slice_size])
-            )
-            plaintext = plaintext[slice_size:]
-            remain_size -= slice_size
-        return bytes(ciphertext)
-
-    def _decrypt_slice(self, segment: bytes) -> bytes:
-        msg = int.from_bytes(segment, 'big')
-        ret = pow(msg, self._e, self._n).to_bytes(self._key_len)
-        for i, b in enumerate(ret):
-            if i != 0 and b == 0:
-                ret = ret[i+1:]
-                break
-        return ret
-
-    def decrypt(self, ciphertext: bytes) -> bytearray:
-        plaintext = bytearray()
-        remain_size = len(ciphertext)
-        while remain_size > 0:
-            slice_size = self._key_len
-            if slice_size > remain_size:
-                slice_size = remain_size
-            plaintext.extend(
-                self._decrypt_slice(ciphertext[:slice_size])
-            )
-            ciphertext = ciphertext[slice_size:]
-            remain_size -= slice_size
-        return plaintext
-
-
-_cipher = _RsaCipher(_ras_n, _rsa_e)
+_cipher = _rsa.Cipher(_ras_n, _rsa_e)
 
 
 def generate_key() -> bytes:
@@ -134,14 +36,13 @@ def generate_key() -> bytes:
 
 def encode(key: bytes, input: str) -> str:
     input_data = bytearray(input.encode())
-
-    _xor_transform(
-        key=_xor_derive_key(key, 4),
+    _xor.transform(
+        key=_xor.derive_key(key, 4),
         data=input_data
     )
     input_data.reverse()
-    _xor_transform(
-        key=_xor_client_key,
+    _xor.transform(
+        key=_xor.client_key,
         data=input_data
     )
     # Prepend key
@@ -156,13 +57,13 @@ def decode(key: bytes, input: str) -> str:
     plaintext = _cipher.decrypt(input_data)
 
     server_key, plaintext = plaintext[:16], plaintext[16:]
-    _xor_transform(
-        key=_xor_derive_key(server_key, 12),
+    _xor.transform(
+        key=_xor.derive_key(server_key, 12),
         data=plaintext
     )
     plaintext.reverse()
-    _xor_transform(
-        key=_xor_derive_key(key, 4),
+    _xor.transform(
+        key=_xor.derive_key(key, 4),
         data=plaintext
     )
     return plaintext.decode()

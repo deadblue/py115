@@ -65,7 +65,7 @@ class Cipher:
     def encode(self, data: bytes) -> bytes:
         pad_size = AES.block_size - len(data) % AES.block_size
         if pad_size != AES.block_size:
-            data += bytes([0] * pad_size)
+            data += b'\x00' * pad_size
         encrypter = AES.new(
             key=self._aes_key,
             mode=AES.MODE_CBC,
