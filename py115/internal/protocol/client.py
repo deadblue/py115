@@ -17,24 +17,22 @@ _logger = logging.getLogger(__name__)
 
 class Client:
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs) -> None:
+        self._ecc = ec115.Cipher()
+        self._session = requests.Session()
+        # Configure session
         self._user_agent = 'Mozilla/5.0'
-        self._app_version = None
-        session = requests.Session()
-        session.headers.update({
+        self._session.headers.update({
             'User-Agent': self._user_agent
         })
-        self._session = session
-        self._ecc = ec115.Cipher()
-
-    def enable_debug(self):
-        # Disable SSL verification for MITM debugging
-        self._session.verify = False
-        warnings.simplefilter('ignore', category=InsecureRequestWarning)
-        self._session.proxies.update({
-            'http': '127.0.0.1:9999',
-            'https': '127.0.0.1:9999'
-        })
+        verify = kwargs.pop('verify', None)
+        if verify is not None and isinstance(verify, bool):
+            self._session.verify = verify
+            if not verify:
+                warnings.simplefilter('ignore', category=InsecureRequestWarning)
+        proxies = kwargs.pop('proxies', None)
+        if proxies is not None and isinstance(proxies, dict):
+            self._session.proxies = proxies
 
     def import_cookie(self, cookies: dict):
         for name, value in cookies.items():
@@ -44,7 +42,6 @@ class Client:
             )
 
     def setup_user_agent(self, app_version: str):
-        self._app_version = app_version
         self._user_agent = 'Mozilla/5.0 115Desktop/%s' % app_version
         self._session.headers.update({
             'User-Agent': self._user_agent
@@ -54,16 +51,11 @@ class Client:
     def user_agent(self) -> str:
         return self._user_agent
 
-    @property
-    def app_version(self) -> str:
-        return self._app_version
-
     def execute_api(self, spec: ApiSpec):
         if spec.use_ec:
-            spec.append_param(
-                'k_ec', 
-                self._ecc.encode_token(int(time.time()))
-            )
+            spec.update_qs({
+                'k_ec': self._ecc.encode_token(int(time.time()))
+            })
         data = spec.payload
         if data is None:
             resp = self._session.get(url=spec.url, params=spec.qs)
@@ -82,4 +74,5 @@ class Client:
             result = json.loads(self._ecc.decode(resp.content))
         else:
             result = resp.json()
+        _logger.debug('API result: %r', result)
         return spec.parse_result(result)

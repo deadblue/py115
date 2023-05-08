@@ -22,6 +22,34 @@ _ERROR_CODE_FIELDS = [
     'errcode', 'errNo', 'errno', 'code'
 ]
 
+def find_error_code(result: dict) -> int:
+    if result.get('state', False):
+        return 0
+    for field in _ERROR_CODE_FIELDS:
+        if field not in result:
+            continue
+        ec = result[field]
+        if isinstance(ec, int) and ec > 0:
+            return ec
+    return -1
+
+
+def _flat_params(params: dict) -> dict:
+    flatted_params = {}
+    for key, value in params.items():
+        if isinstance(value, typing.Dict):
+            for sub_k, sub_v in value.items():
+                sub_k = '%s[%s]' % (key, sub_k)
+                flatted_params[sub_k], str(sub_v)
+        elif isinstance(value, (typing.List, typing.Tuple)):
+            for sub_i, sub_v in enumerate(value):
+                sub_k = '%s[%d]' % (key, sub_i)
+                flatted_params[sub_k] = str(sub_v)
+        else:
+            flatted_params[key] = str(value)
+    return flatted_params
+
+
 class ApiSpec:
 
     def __init__(self, url: str, use_ec: bool = False) -> None:
@@ -45,27 +73,30 @@ class ApiSpec:
     @property
     def payload(self) -> bytes:
         if len(self._form) > 0:
-            return urllib.parse.urlencode(self._form)
+            return urllib.parse.urlencode(self._form).encode()
         else:
             return None
 
-    def append_param(self, key: str, value: str, in_qs: bool = True):
-        if in_qs:
-            self._qs[key] = value
+    def update_qs(self, params: dict):
+        if self._qs is None:
+            self._qs = _flat_params(params)
         else:
-            self._form[key] = value
+            self._qs.update(_flat_params(params))
+
+    def update_from(self, params: dict):
+        if self._form is None:
+            self._form = _flat_params(params)
+        else:
+            self._form.update(_flat_params(params))
 
     def parse_result(self, result: dict) -> typing.Any:
-        if result.get('state', False):
-            return result.get('data')
+        if 'data' in result:
+            return result['data']
+        error_code = find_error_code(result)
+        if error_code == 0:
+            return None
         else:
-            for name in _ERROR_CODE_FIELDS:
-                if name not in result: continue
-                code = result.get(name)
-                if code != 0:
-                    raise ApiException(code)
-            # Unknown exception
-            raise ApiException(-1)
+            raise ApiException(error_code)
 
 
 class M115ApiSpec(ApiSpec):

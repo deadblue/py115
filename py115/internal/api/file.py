@@ -2,20 +2,20 @@ __author__ = 'deadblue'
 
 import time
 
-from py115.internal.protocol import ApiException, ApiSpec, M115ApiSpec
+from py115.internal.protocol import api
 
 
-class RetryException(ApiException):
+class RetryException(api.ApiException):
 
     def __init__(self, code: int, *args: object) -> None:
         super().__init__(code, *args)
 
 
-class ListApi(ApiSpec):
+class ListApi(api.ApiSpec):
 
     def __init__(self, dir_id: str) -> None:
         super().__init__(None)
-        self._qs = {
+        self.update_qs({
             'aid': '1',
             'cid': dir_id,
             'o': 'user_utime',
@@ -26,7 +26,7 @@ class ListApi(ApiSpec):
             'snap': '0',
             'natsort': '1',
             'format': 'json',
-        }
+        })
 
     @property
     def url(self) -> str:
@@ -44,7 +44,7 @@ class ListApi(ApiSpec):
                 'files': result.get('data')
             }
         else:
-            err_code = result.get('errNo', -1)
+            err_code = api.find_error_code(result)
             if err_code == 20130827:
                 self._qs.update({
                     'o': result['order'],
@@ -52,40 +52,36 @@ class ListApi(ApiSpec):
                 })
                 raise RetryException(err_code)
             else:
-                raise ApiException(err_code)
+                raise api.ApiException(err_code)
 
-    def update_offset(self, offset: int):
-        self._qs.update({
+    def set_offset(self, offset: int):
+        self.update_qs({
             'offset': str(offset)
         })
 
 
-class DeleteApi(ApiSpec):
+class DeleteApi(api.ApiSpec):
 
     def __init__(self, parent_id: str, *file_ids: str) -> None:
         super().__init__('https://webapi.115.com/rb/delete')
-        self._form = {
+        self.update_from({
             'pid': parent_id,
+            'fid': file_ids,
             'ignore_warn': '1'
-        }
-        for index, file_id in enumerate(file_ids):
-            key = 'fid[%d]' % index
-            self._form[key] = file_id
+        })
 
 
-class MoveApi(ApiSpec):
+class MoveApi(api.ApiSpec):
 
     def __init__(self, parent_id: str, *file_ids: str) -> None:
         super().__init__('https://webapi.115.com/files/move')
-        self._form = {
+        self.update_from({
             'pid': parent_id,
-        }
-        for index, file_id in enumerate(file_ids):
-            key = 'fid[%d]' % index
-            self._form[key] = file_id
+            'fid': file_ids
+        })
 
 
-class RenameApi(ApiSpec):
+class RenameApi(api.ApiSpec):
 
     def __init__(self, file_id: str, new_name: str) -> None:
         super().__init__('https://webapi.115.com/files/batch_rename')
@@ -93,21 +89,14 @@ class RenameApi(ApiSpec):
         self._form[key] = new_name
 
 
-class OrderApi(ApiSpec):
-
-    def __init__(self, dir_id: str, order: str, asc: bool = False) -> None:
-        super().__init__('https://webapi.115.com/files/order')
-        self._form = {
-            'file_id': dir_id,
-            'user_order': order,
-            'user_asc': '1' if asc else '0',
-            'fc_mix': '0'
-        }
-
-
-class DownloadApi(M115ApiSpec):
+class DownloadApi(api.M115ApiSpec):
 
     def __init__(self, pickcode: str) -> None:
         super().__init__('https://proapi.115.com/app/chrome/downurl', True)
-        self._qs['t'] = int(time.time())
-        self._form['pickcode'] = pickcode
+        self.update_qs({
+            't': int(time.time())
+        })
+        self.update_from({
+            'pickcode': pickcode
+        })
+

@@ -1,0 +1,75 @@
+__author__ = 'deadblue'
+
+import typing
+
+from py115.internal.protocol import api
+
+
+class ListApi(api.ApiSpec):
+    
+    def __init__(self, page: int = 1) -> None:
+        super().__init__('https://lixian.115.com/lixian/', True)
+        self.update_qs({
+            'ct': 'lixian',
+            'ac': 'task_lists',
+            'page': page
+        })
+
+    def set_page(self, page: int):
+        self.update_qs({
+            'page': page
+        })
+
+    def parse_result(self, result: dict) -> typing.Any:
+        error_code = api.find_error_code(result)
+        if error_code != 0:
+            raise api.ApiException(error_code)
+        tasks = result.get('tasks', None)
+        return {
+            'page_count': result.get('page_count', 1),
+            'page': result.get('page', 1),
+            'task_count': result.get('count', 0),
+            'tasks': tasks or []
+        }
+
+
+class DeleteApi(api.ApiSpec):
+
+    def __init__(self, *task_ids: str) -> None:
+        super().__init__('https://lixian.115.com/lixian/', True)
+        self.update_qs({
+            'ct': 'lixian',
+            'ac': 'task_del'
+        })
+        self.update_from({
+            'hash': task_ids,
+            'flag': '0',
+        })
+
+
+class ClearApi(api.ApiSpec):
+
+    def __init__(self, flag: int) -> None:
+        super().__init__('https://lixian.115.com/lixian/', True)
+        self.update_qs({
+            'ct': 'lixian',
+            'ac': 'task_clear'
+        })
+        self.update_from({
+            'flag': flag
+        })
+
+
+class AddUrlsApi(api.M115ApiSpec):
+    
+    def __init__(self, app_ver: str, user_id: int, *urls: str) -> None:
+        super().__init__('https://lixian.115.com/lixianssp/', True)
+        self.update_qs({
+            'ac': 'add_task_urls'
+        })
+        self.update_from({
+            'ac': 'add_task_urls',
+            'app_ver': app_ver,
+            'uid': user_id,
+            'url': urls
+        })
