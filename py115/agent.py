@@ -1,30 +1,36 @@
 __author__ = 'deadblue'
 
+import os.path
 import typing
 
-from py115.internal import protocol
-from py115.internal.api import file, offline, version, user
-
 from py115 import models
-
+from py115.internal.protocol import api, client
+from py115.internal.api import file, dir, task, version, upload
+from py115.types import TaskClearFlag
 
 class Agent:
 
-    def __init__(self, **kwargs) -> None:
-        self._client = protocol.Client()
-        # Enable debug
-        if kwargs.get('debug', False):
-            self._client.enable_debug()
+    _app_ver: str = None
+    _user_id: int = None
+    _upload_helper: upload.Helper = None
+
+    def __init__(self, protocol_kwargs: dict = None) -> None:
+        # Config protocol client
+        protocol_kwargs = protocol_kwargs or {}
+        self._client = client.Client(**protocol_kwargs)
         # Get latest app version
-        version_data = self._client.execute_api(version.GetApi())
+        self._app_ver = self._client.execute_api(version.GetApi())
         self._client.setup_user_agent(
-            app_version=version_data['linux_115']['version_code']
+            app_version=self._app_ver
         )
 
     def set_cookie(self, cookies: dict):
         self._client.import_cookie(cookies)
-        user_info = self._client.execute_api(user.GetApi())
-
+        # Init upload helper
+        user_id, user_key = self._client.execute_api(upload.InfoApi())
+        self._upload_helper = upload.Helper(
+            self._app_ver, user_id, user_key
+        )
 
     def file_list(self, dir_id: str) -> typing.Generator[models.File, None, None]:
         spec = file.ListApi(dir_id)
@@ -36,27 +42,23 @@ class Agent:
             if next_offset >= result['count']:
                 break
             else:
-                spec.update_offset(next_offset)
-
+                spec.set_offset(next_offset)
     def _file_list_internal(self, spec) -> dict:
         while True:
             try: 
                 result = self._client.execute_api(spec)
                 return result
-            except file.RetryException:
+            except api.RetryException:
                 pass
 
     def file_move(self, target_dir_id: str, *file_ids: str):
-        spec = file.MoveApi(target_dir_id, *file_ids)
-        self._client.execute_api(spec)
+        self._client.execute_api(file.MoveApi(target_dir_id, *file_ids))
 
     def file_rename(self, file_id: str, new_name: str):
-        spec = file.RenameApi(file_id, new_name)
-        self._client.execute_api(spec)
+        self._client.execute_api(file.RenameApi(file_id, new_name))
 
     def file_delete(self, parent_id: str, *file_ids: str):
-        spec = file.DeleteApi(parent_id, *file_ids)
-        self._client.execute_api(spec)
+        self._client.execute_api(file.DeleteApi(parent_id, *file_ids))
 
     def file_download(self, pickcode: str) -> models.DownloadTicket:
         spec = file.DownloadApi(pickcode)
@@ -70,41 +72,88 @@ class Agent:
             return ticket
         return None
 
-    def offline_list(self) -> typing.Generator[models.Task, None, None]:
-        page = 1
-        spec = offline.ListApi(page)
+    def dir_add(self, parent_id: str, name: str) -> models.File:
+        result = self._client.execute_api(dir.AddApi(parent_id, name))
+        # TODO: Format result
+        return None
+
+    def upload_file(self, dir_id: str, file_path: str) -> models.UploadTicket:
+        """
+        Upload local file to cloud storage.
+
+        :param dir_id: Directory ID on cloud storage.
+        :param file_path: Local file path/
+        """
+        if not os.path.exists(file_path):
+            return None
+        file_name = os.path.basename(file_path)
+        with open(file_path, 'rb') as file_io:
+            return self.upload_data(dir_id, file_name, file_io)
+
+    def upload_data(
+            self, 
+            dir_id: str, 
+            file_name: str, 
+            file_io: typing.BinaryIO, 
+        ) -> models.UploadTicket:
+        """
+        Upload data as a file to cloud storage.
+
+        :param dir_id: Directory ID on cloud storage.
+        :param file_name: File name to be saved on cloud storage.
+        :param file_io: 
+        """
+        if not (file_io.readable() and file_io.seekable()):
+            return None
+        spec = upload.InitApi(
+            target_id=f'U_1_{dir_id}',
+            file_name=file_name,
+            file_io=file_io,
+            helper=self._upload_helper
+        )
+        while True:
+            try:
+                init_result = self._client.execute_api(spec)
+                break
+            except api.RetryException:
+                pass
+        ticket = models.UploadTicket(init_result)
+        if not ticket.is_done:
+            token_result = self._client.execute_api(upload.TokenApi())
+            ticket.set_oss_token(token_result)
+        return ticket
+
+    def task_list(self) -> typing.Generator[models.Task, None, None]:
+        spec = task.ListApi()
         while True:
             result = self._client.execute_api(spec)
-            for task in result['tasks']:
-                yield models.Task(task)
-            if page < result['page_count']:
-                page += 1
-                spec.set_page(page)
+            for t in result['tasks']:
+                yield models.Task(t)
+            page, page_count = result['page'], result['page_count']
+            if page < page_count:
+                spec.set_page(page + 1)
             else:
                 break
 
-    # def offline_add_tasks(self, *urls:str, **kwargs):
-    #     # Prepare parameters
-    #     save_path = kwargs.pop('save_path', '')
-    #     data = {
-    #         'ac': 'add_task_urls',
-    #         'app_ver': self._client.app_version,
-    #         'savepath': save_path,
-    #         'uid': '1374893'
-    #     }
-    #     for i, url in enumerate(urls):
-    #         key = 'url[%d]' % i
-    #         data[key] = url
-    #     key = m115.generate_key()
-    #     result = self._client.call_secret_api(
-    #         url=api.offline_add_task_urls,
-    #         params={
-    #             'ac': 'add_task_urls'
-    #         },
-    #         form={
-    #             'data': m115.encode(key, json.dumps(data))
-    #         }
-    #     )
-    #     result = m115.decode(key, result)
-    #     _logger.info('Add urls result: %s', result)
-    
+    def task_add_urls(self, *urls: str):
+        """
+        Add tasks by URLs.
+        """
+        add_results = self._client.execute_api(task.AddUrlsApi(
+            self._app_ver, self._user_id, *urls
+        ))
+        return [models.Task(r) for r in add_results]
+
+    def task_delete(self, *task_ids: str):
+        """
+        Delete tasks.
+
+        :param task_ids: ID of task to delete.
+        """
+        self._client.execute_api(task.DeleteApi(*task_ids))
+
+    def task_clear(self, target: TaskClearFlag = TaskClearFlag.Done):
+        """
+        Clear offline tasks.
+        """
+        self._client.execute_api(task.ClearApi(target.value))

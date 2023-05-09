@@ -5,12 +5,6 @@ import time
 from py115.internal.protocol import api
 
 
-class RetryException(api.ApiException):
-
-    def __init__(self, code: int, *args: object) -> None:
-        super().__init__(code, *args)
-
-
 class ListApi(api.ApiSpec):
 
     def __init__(self, dir_id: str) -> None:
@@ -50,7 +44,7 @@ class ListApi(api.ApiSpec):
                     'o': result['order'],
                     'asc': result['is_asc'],
                 })
-                raise RetryException(err_code)
+                raise api.RetryException(err_code)
             else:
                 raise api.ApiException(err_code)
 

@@ -1,6 +1,5 @@
 __author__ = 'deadblue'
 
-import typing
 from py115.internal.protocol import api
 
 
@@ -12,10 +11,6 @@ class AddApi(api.ApiSpec):
             'pid': parent_id,
             'cname': dir_name
         })
-
-    def parse_result(self, result: dict) -> typing.Any:
-        # error_code = api.find_error_code(result)
-        return super().parse_result(result)
 
 
 class SortApi(api.ApiSpec):

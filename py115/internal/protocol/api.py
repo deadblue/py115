@@ -18,6 +18,12 @@ class ApiException(Exception):
         return self._code
 
 
+class RetryException(ApiException):
+
+    def __init__(self, code: int, *args: object) -> None:
+        super().__init__(code, *args)
+
+
 _ERROR_CODE_FIELDS = [
     'errcode', 'errNo', 'errno', 'code'
 ]
@@ -113,7 +119,6 @@ class M115ApiSpec(ApiSpec):
         }).encode()
 
     def parse_result(self, result: dict):
-        # Handle API error
         data = super().parse_result(result)
         # M115 decode
         return json.loads(m115.decode(self._m_key, data))

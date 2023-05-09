@@ -67,15 +67,19 @@ class File:
 
 class Task:
 
-    def __init__(self, raw: dict) -> None:
-        self._info_hash = raw.get('info_hash')
-        self._name = raw.get('name')
-        self._size = raw.get('size')
-        self._status = raw.get('status')
+    """
+    Task represents an offline task.
+    """
+
+    def __init__(self, raw: dict):
+        self._task_id = raw.get('info_hash')
+        self._name = raw.get('name', None)
+        self._size = raw.get('size', -1)
+        self._status = raw.get('status', 0)
 
     @property
-    def info_hash(self) -> str:
-        return self._info_hash
+    def task_id(self) -> str:
+        return self._task_id
 
     @property
     def name(self) -> str:
@@ -98,7 +102,7 @@ class Task:
         return self._status == -1
 
     def __repr__(self) -> str:
-        return '%s - %s' % (self._info_hash, self._name)
+        return '%s - %s' % (self._task_id, self._name)
 
 
 class DownloadTicket:
@@ -131,5 +135,43 @@ class DownloadTicket:
 
 class UploadTicket:
 
-    def __init__(self) -> None:
-        pass
+    _done: bool = None
+    _bucket: str = None
+    _object: str = None
+    _callback_url: str = None
+    _callback_var: str = None
+    _access_key_id: str = None
+    _access_key_secret: str = None
+    _security_token: str = None
+
+    def __init__(self, raw: dict) -> None:
+        self._done = raw.get('done', False)
+        self._bucket = raw.get('bucket', None)
+        self._object = raw.get('object', None)
+        self._callback_url = raw.get('callback', None)
+        self._callback_var = raw.get('callback_var', None)
+
+    def set_oss_credential(self, raw:dict):
+        self._access_key_id = raw.get('access_key_id', None)
+        self._access_key_secret = raw.get('access_key_secret', None)
+        self._security_token = raw.get('security_token', None)
+
+    @property
+    def is_done(self) -> bool:
+        return self._done
+
+    @property
+    def bucket(self) -> str:
+        return self._bucket
+
+    @property
+    def object(self) -> str:
+        return self._object
+
+    @property
+    def callback_url(self) -> str:
+        return self._callback_url
+    
+    @property
+    def callback_var(self) -> str:
+        return self._callback_var

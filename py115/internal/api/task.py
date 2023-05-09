@@ -73,3 +73,7 @@ class AddUrlsApi(api.M115ApiSpec):
             'uid': user_id,
             'url': urls
         })
+    
+    def parse_result(self, result: dict):
+        result = super().parse_result(result)
+        return result['result']
