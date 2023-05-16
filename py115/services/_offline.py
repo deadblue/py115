@@ -40,7 +40,7 @@ class OfflineService:
             else:
                 break
 
-    def add_urls(self, *urls: str):
+    def add_url(self, *urls: str):
         """
         Add tasks by download URL.
         """

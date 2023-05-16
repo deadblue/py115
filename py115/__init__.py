@@ -21,7 +21,7 @@ for file in storage.list():
 from .cloud import Cloud
 from .types import Credential
 
-def create(
+def connect(
         credential: Credential = None,
         protocol_kwargs: dict=  None
 ) -> Cloud:
