@@ -3,7 +3,7 @@ __author__ = 'deadblue'
 import base64
 import secrets
 
-from py115.internal.crypto import _rsa, _xor
+from py115._internal.crypto import _rsa, _xor
 
 
 _ras_n = [

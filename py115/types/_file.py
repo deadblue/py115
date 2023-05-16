@@ -1,12 +1,11 @@
 __author__ = 'deadblue'
 
-import datetime
+from datetime import datetime
 
-from py115.internal.api import time
+from py115.types import _utils as utils
 
 
 class File:
-    
     """
     File represents a cloud file.
     """
@@ -15,42 +14,39 @@ class File:
         category_id = raw.get('cid')
         file_id = raw.get('fid')
         parent_id = raw.get('pid')
-        if file_id is None:
+        self._is_dir = file_id is None
+        if self._is_dir:
             self._file_id = category_id
             self._parent_id = parent_id
-            self._is_dir = True
+            self._size = 0
+            self._sha1, self._pc = None, None
         else:
             self._file_id = file_id
             self._parent_id = category_id
-            self._is_dir = False
+            self._size = raw.get('s')
+            self._sha1 = raw.get('sha')
+            self._pc = raw.get('pc')
         self._name = raw.get('n')
-        self._size = 0 if self._is_dir else raw.get('s')
-        self._sha1 = None if self._is_dir else raw.get('sha')
-        self._pc = None if self._is_dir else raw.get('pc')
-        self._time = time.parse_datetime_str(raw.get('t'))
-
-    @property
-    def is_dir(self) -> bool:
-        return self._is_dir
+        self._time = utils.parse_datetime_str(raw.get('t'))
 
     @property
     def file_id(self) -> str:
         return self._file_id
-    
+
     @property
     def parent_id(self) -> str:
         return self._parent_id
-    
+
     @property
     def name(self) -> str:
         return self._name
-    
+
     @property
     def size(self) -> int:
         return self._size
-    
+
     @property
-    def modified_time(self) -> datetime.datetime:
+    def modified_time(self) -> datetime:
         return self._time
     
     @property
@@ -60,58 +56,32 @@ class File:
     @property
     def pickcode(self) -> str:
         return self._pc
-    
-    def __str__(self) -> str:
-        return self._name
-
-
-class Task:
-
-    """
-    Task represents an offline task.
-    """
-
-    def __init__(self, raw: dict):
-        self._task_id = raw.get('info_hash')
-        self._name = raw.get('name', None)
-        self._size = raw.get('size', -1)
-        self._status = raw.get('status', 0)
 
     @property
-    def task_id(self) -> str:
-        return self._task_id
-
-    @property
-    def name(self) -> str:
-        return self._name
-    
-    @property
-    def size(self) -> int:
-        return self._size
-
-    @property
-    def is_running(self) -> bool:
-        return self._status == 1
-
-    @property
-    def is_done(self) -> bool:
-        return self._status == 2
-
-    @property
-    def is_failed(self) -> bool:
-        return self._status == -1
+    def is_dir(self) -> bool:
+        return self._is_dir
 
     def __repr__(self) -> str:
-        return '%s - %s' % (self._task_id, self._name)
+        return f'ID={self._file_id}, Name={self._name}'
+
+    def __str__(self) -> str:
+        if self._is_dir:
+            return f'{self._name}/'
+        else:
+            return self._name
 
 
 class DownloadTicket:
+    """
+    DownloadTicket contains required parameters to download a file 
+    from cloud storage.
+    """
 
-    def __init__(self, raw: dict) -> None:
-        self._file_name = raw.get('file_name', '')
-        self._file_size = int(raw.get('file_size', 0))
+    def __init__(self, raw: dict, headers: dict = {}) -> None:
+        self._name = raw.get('file_name', '')
+        self._size = int(raw.get('file_size', 0))
         self._url = raw.get('url', {}).get('url', '')
-        self._headers = {}
+        self._headers = headers
 
     @property
     def url(self) -> str:
@@ -123,11 +93,11 @@ class DownloadTicket:
 
     @property
     def file_name(self) -> str :
-        return self._file_name
+        return self._name
 
     @property
     def file_size(self) -> int:
-        return self._file_size
+        return self._size
     
     def __str__(self) -> str:
         return self._url
@@ -151,7 +121,7 @@ class UploadTicket:
         self._callback_url = raw.get('callback', None)
         self._callback_var = raw.get('callback_var', None)
 
-    def set_oss_credential(self, raw:dict):
+    def set_oss_token(self, raw:dict):
         self._access_key_id = raw.get('access_key_id', None)
         self._access_key_secret = raw.get('access_key_secret', None)
         self._security_token = raw.get('security_token', None)

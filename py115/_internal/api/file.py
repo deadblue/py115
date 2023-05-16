@@ -2,7 +2,7 @@ __author__ = 'deadblue'
 
 import time
 
-from py115.internal.protocol import api
+from py115._internal.protocol import api
 
 
 class ListApi(api.ApiSpec):
@@ -12,7 +12,7 @@ class ListApi(api.ApiSpec):
         self.update_qs({
             'aid': '1',
             'cid': dir_id,
-            'o': 'user_utime',
+            'o': 'user_ptime',
             'asc': '0',
             'offset': '0',
             'limit': '115',
@@ -44,7 +44,7 @@ class ListApi(api.ApiSpec):
                     'o': result['order'],
                     'asc': result['is_asc'],
                 })
-                raise api.RetryException(err_code)
+                raise api.RetryException()
             else:
                 raise api.ApiException(err_code)
 
@@ -80,7 +80,9 @@ class RenameApi(api.ApiSpec):
     def __init__(self, file_id: str, new_name: str) -> None:
         super().__init__('https://webapi.115.com/files/batch_rename')
         key = 'files_new_name[%s]' % file_id
-        self._form[key] = new_name
+        self.update_from({
+            key: new_name
+        })
 
 
 class DownloadApi(api.M115ApiSpec):
@@ -93,4 +95,3 @@ class DownloadApi(api.M115ApiSpec):
         self.update_from({
             'pickcode': pickcode
         })
-

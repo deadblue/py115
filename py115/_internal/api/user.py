@@ -1,6 +1,6 @@
 __author__ = 'deadblue'
 
-from py115.internal.protocol import ApiSpec
+from py115._internal.protocol.api import ApiSpec
 
 class GetApi(ApiSpec):
     def __init__(self) -> None:

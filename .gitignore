@@ -4,3 +4,5 @@ venv
 __pycache__
 
 test.py
+
+docs/_build

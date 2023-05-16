@@ -4,7 +4,7 @@ import json
 import typing
 import urllib.parse
 
-from py115.internal.crypto import m115
+from py115._internal.crypto import m115
 
 
 class ApiException(Exception):
@@ -18,10 +18,10 @@ class ApiException(Exception):
         return self._code
 
 
-class RetryException(ApiException):
+class RetryException(Exception):
 
-    def __init__(self, code: int, *args: object) -> None:
-        super().__init__(code, *args)
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
 
 
 _ERROR_CODE_FIELDS = [

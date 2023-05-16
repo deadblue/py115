@@ -1,6 +1,6 @@
 __author__ = 'deadblue'
 
-from py115.internal.protocol import api
+from py115._internal.protocol import api
 
 
 class AddApi(api.ApiSpec):
@@ -11,6 +11,15 @@ class AddApi(api.ApiSpec):
             'pid': parent_id,
             'cname': dir_name
         })
+    
+    def parse_result(self, result: dict) -> dict:
+        err_code = api.find_error_code(result)
+        if err_code != 0:
+            raise api.ApiException(err_code)
+        return {
+            'cid': result.get('cid'),
+            'n': result.get('cname')
+        }
 
 
 class SortApi(api.ApiSpec):

@@ -2,7 +2,7 @@ __author__ = 'deadblue'
 
 import typing
 
-from py115.internal.protocol import api
+from py115._internal.protocol import api
 
 
 class ListApi(api.ApiSpec):
@@ -62,17 +62,21 @@ class ClearApi(api.ApiSpec):
 
 class AddUrlsApi(api.M115ApiSpec):
     
-    def __init__(self, app_ver: str, user_id: int, *urls: str) -> None:
+    def __init__(self, app_ver: str, user_id: int, *urls: str, **kwargs) -> None:
         super().__init__('https://lixian.115.com/lixianssp/', True)
         self.update_qs({
             'ac': 'add_task_urls'
         })
-        self.update_from({
+        params = {
             'ac': 'add_task_urls',
             'app_ver': app_ver,
             'uid': user_id,
             'url': urls
-        })
+        }
+        save_dir_id = kwargs.pop('save_dir_id', None)
+        if save_dir_id is not None:
+            params['wp_path_id'] = save_dir_id
+        self.update_from(params)
     
     def parse_result(self, result: dict):
         result = super().parse_result(result)

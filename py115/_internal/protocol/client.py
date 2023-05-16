@@ -8,8 +8,8 @@ from urllib3.exceptions import InsecureRequestWarning
 
 import requests
 
-from py115.internal.crypto import ec115
-from py115.internal.protocol.api import ApiSpec
+from py115._internal.crypto import ec115
+from py115._internal.protocol.api import ApiSpec, RetryException
 
 
 _logger = logging.getLogger(__name__)
@@ -34,12 +34,18 @@ class Client:
         if proxies is not None and isinstance(proxies, dict):
             self._session.proxies = proxies
 
-    def import_cookie(self, cookies: dict):
+    def import_cookies(self, cookies: dict):
         for name, value in cookies.items():
             self._session.cookies.set(
                 name, value,
-                domain='.115.com'
+                domain='.115.com',
+                path='/'
             )
+
+    def export_cookies(self) -> dict:
+        return self._session.cookies.get_dict(
+            domain='.115.com', path='/'
+        )
 
     def setup_user_agent(self, app_version: str):
         self._user_agent = 'Mozilla/5.0 115Desktop/%s' % app_version
@@ -52,6 +58,13 @@ class Client:
         return self._user_agent
 
     def execute_api(self, spec: ApiSpec):
+        while True:
+            try:
+                return self._execute_api_internal(spec)
+            except RetryException:
+                pass
+
+    def _execute_api_internal(self, spec: ApiSpec):
         if spec.use_ec:
             spec.update_qs({
                 'k_ec': self._ecc.encode_token(int(time.time()))

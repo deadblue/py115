@@ -17,4 +17,8 @@ def parse_datetime_str(s: str) -> datetime.datetime:
         return  datetime.datetime.fromtimestamp(
             float(s), tz=_tz_cst
         )
-    
+
+def make_datetime(ts: int) -> datetime.datetime:
+    return datetime.datetime.fromtimestamp(
+        float(ts), tz=_tz_cst
+    )

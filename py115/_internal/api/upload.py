@@ -7,7 +7,7 @@ import logging
 import time
 import typing
 
-from py115.internal.protocol import api
+from py115._internal.protocol import api
 
 
 _logger = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ class InitApi(api.ApiSpec):
                     now, sign_key, sign_val
                 )
             })
-            raise api.RetryException(code=result['statuscode'])
+            raise api.RetryException()
         elif status == 2:
             return  {
                 'done': True

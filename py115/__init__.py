@@ -1,7 +1,31 @@
 __author__ = 'deadblue'
 
-from .agent import Agent
+"""
+Python library for 115 cloud storage service.
 
-__all__ = [
-    'Agent'
-]
+Example:
+
+import py115
+from py115.types import Credential
+
+cloud = py115.create(Credential(
+    uid='', cid='', seid=''
+))
+storage = cloud.storage()
+
+for file in storage.list():
+    print(f'File: ${file.name}')
+
+"""
+
+from .cloud import Cloud
+from .types import Credential
+
+def create(
+        credential: Credential = None,
+        protocol_kwargs: dict=  None
+) -> Cloud:
+    return Cloud(
+        credential=credential, 
+        protocol_kwargs=protocol_kwargs
+    )
