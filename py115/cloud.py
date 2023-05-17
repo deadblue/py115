@@ -3,7 +3,7 @@ __author__ = 'deadblue'
 from py115._internal.protocol.client import Client
 from py115._internal.api import upload, version
 
-from py115.services import OfflineService, StorageService
+from py115 import services
 from py115.types import Credential
 
 
@@ -32,48 +32,56 @@ class Cloud:
         if credential is not None:
             self.import_credential(credential)
 
-    def import_credential(self, credential: Credential):
-        """Setup credential for cloud service.
+    def import_credential(self, credential: Credential) -> bool:
+        """Import credential to cloud instance.
 
-        :param credential: Credential object.
-        :type credential: Credential
+        Args:
+            credential (py115.types.Credential): Credential object to identity user.
+
+        Return:
+            bool: Is credential valid.
         """
         self._client.import_cookies(credential.to_dict())
+        try:
         # Initialize upload helper
-        user_id, user_key = self._client.execute_api(upload.InfoApi())
-        self._upload_helper = upload.Helper(
-            self._app_ver, user_id, user_key
-        )
+            user_id, user_key = self._client.execute_api(upload.InfoApi())
+            self._upload_helper = upload.Helper(
+                self._app_ver, user_id, user_key
+            )
+            return True
+        except:
+            return False
 
-    def export_credentail(self) -> Credential:
-        """Export current credentail that cloud service used.
+    def export_credentail(self) -> (Credential | None):
+        """Export current credentail from cloud instance.
 
-        :return: Credential object.
-        :rtype: Credential
+        Return:
+            py115.types.Credential: Credential object, or None when credential is invalid.
         """
+        # TODO: Check credential before return.
         return Credential.from_dict(
             self._client.export_cookies()
         )
 
-    def offline(self) -> OfflineService:
+    def offline(self) -> services.OfflineService:
         """Get offline service.
 
-        :return: Offline service instance.
-        :rtype: OfflineService
+        Return:
+            py115.services.OfflineService: Offline service instance.
         """
-        return OfflineService._create(
+        return services.OfflineService._create(
             client=self._client, 
             app_ver=self._app_ver, 
             user_id=self._upload_helper.user_id
         )
 
-    def storage(self) -> StorageService:
+    def storage(self) -> services.StorageService:
         """Get storage service.
 
-        :return: Storage service instance.
-        :rtype: StorageService
+        Return:
+            py115.services.StorageService: Storage service instance.
         """
-        return StorageService._create(
+        return services.StorageService._create(
             client=self._client,
             uh=self._upload_helper
         )
