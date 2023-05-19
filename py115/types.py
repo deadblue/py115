@@ -1,8 +1,56 @@
 __author__ = 'deadblue'
 
 from datetime import datetime
+from enum import IntEnum
 
-from py115.types import _utils as utils
+from py115._internal import utils
+
+
+class Credential:
+    """Credential contains required information to identify user.
+    """
+
+    _uid: str = None
+    _cid: str = None
+    _seid: str = None
+
+    def __init__(self, uid: str = None, cid: str = None, seid: str = None) -> None:
+        self._uid = uid
+        self._cid = cid
+        self._seid = seid
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        """Create Credential from a dict object.
+
+        Args:
+            d (dict): Dict object.
+
+        Returns:
+            Credential: Credential object.
+        """
+        if len(d) == 0 or not ('UID' in d and 'CID' in d and 'SEID' in d):
+            return None
+        return Credential(
+            uid=d.get('UID'),
+            cid=d.get('CID'),
+            seid=d.get('SEID')
+        )
+
+    def to_dict(self) -> dict:
+        """Convert credential object to dict object.
+
+        Returns:
+            dict: Dict object.
+        """
+        return {
+            'UID': self._uid,
+            'CID': self._cid,
+            'SEID': self._seid,
+        }
+
+    def __repr__(self) -> str:
+        return f'UID={self._uid}, CID={self._cid}, SEID={self._seid}'
 
 
 class File:
@@ -145,3 +193,72 @@ class UploadTicket:
     @property
     def callback_var(self) -> str:
         return self._callback_var
+
+
+class ClearFlag(IntEnum):
+    Done = 0
+    All = 1
+    Failed = 2
+    Running = 3
+
+
+class Task:
+    """
+    Task represents an offline task.
+    """
+
+    def __init__(self, raw: dict):
+        self._id = raw.get('info_hash')
+        self._name = raw.get('name', None)
+        self._size = raw.get('size', -1)
+        self._time = utils.make_datetime(raw.get('add_time', 0))
+        self._precent = float(raw.get('percentDone', 0))
+        self._status = raw.get('status', 0)
+        # Get File ID
+        file_id = raw.get('file_id', '')
+        del_file_id = raw.get('delete_file_id', '')
+        self._file_id = del_file_id
+        self._is_dir = file_id != '' and file_id == del_file_id
+
+    @property
+    def task_id(self) -> str:
+        return self._id
+
+    @property
+    def name(self) -> str:
+        return self._name
+    
+    @property
+    def size(self) -> int:
+        return self._size
+
+    @property
+    def added_time(self) -> datetime:
+        return self._time
+
+    @property
+    def percent(self) -> float:
+        return self._precent
+
+    @property
+    def file_id(self) -> str:
+        return self._file_id
+
+    @property
+    def file_is_dir(self) -> bool:
+        return self._is_dir
+
+    @property
+    def is_running(self) -> bool:
+        return self._status == 1
+
+    @property
+    def is_done(self) -> bool:
+        return self._status == 2
+
+    @property
+    def is_failed(self) -> bool:
+        return self._status == -1
+
+    def __repr__(self) -> str:
+        return f'ID={self._id}, Name="{self._name}", Size={self._size}, Percent={self._precent:0.2f}'
