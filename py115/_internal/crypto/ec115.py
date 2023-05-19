@@ -6,9 +6,7 @@ import random
 import struct
 
 from Crypto.Cipher import AES
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+from Crypto.PublicKey import ECC
 import lz4.block
 
 _server_pub_key = bytes([
@@ -22,6 +20,8 @@ _server_pub_key = bytes([
     0xba,
 ])
 
+_curve_name = 'P-224'
+
 _crc_salt = b'^j>WD3Kr?J2gLFjD4W2y@'
 
 _logger = logging.getLogger(__name__)
@@ -29,18 +29,18 @@ _logger = logging.getLogger(__name__)
 class Cipher:
 
     def __init__(self) -> None:
-        # Use P-224 curve
-        curve = ec.SECP224R1()
-        # Parse server key
-        server_key = ec.EllipticCurvePublicKey.from_encoded_point(
-            curve=curve, data=_server_pub_key)
+        # Load server public key
+        server_key = ECC.import_key(
+            encoded=_server_pub_key, curve_name=_curve_name
+        )
         # Generate client key
-        ec_key = ec.generate_private_key(
-            curve=curve, backend=default_backend())
-        self._pub_key = b'\x1d' + ec_key.public_key().public_bytes(
-            encoding=Encoding.X962, format=PublicFormat.CompressedPoint)
+        client_key = ECC.generate(curve=_curve_name)
+        # Export client public key
+        self._pub_key = b'\x1d' + client_key.public_key().export_key(
+            format='SEC1', compress=True
+        )
         # ECDH key exchange
-        shared_secret = ec_key.exchange(ec.ECDH(), server_key)
+        shared_secret = (server_key.pointQ * client_key.d).x.to_bytes(28)
         self._aes_key = shared_secret[:16]
         self._aes_iv = shared_secret[-16:]
     
