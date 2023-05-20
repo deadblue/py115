@@ -1,4 +1,4 @@
 lz4
-pycryptodome
+pycryptodome >= 3.17.0
 pytz
 requests

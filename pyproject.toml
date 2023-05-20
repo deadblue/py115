@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools"]
+
+[project]
+name = "py115"
+authors = [
+    {name = "deadblue", email = "public@dead.blue"}
+]
+description = "Python SDK for 115 cloud storage service."
+keywords = [
+    "115", "sdk"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: Libraries",
+]
+license = {file = "LICENSE"}
+requires-python = ">=3.9"
+dynamic = ["dependencies", "version"]
+
+[project.urls]
+homepage = "https://github.com/deadblue/py115"
+source = "https://github.com/deadblue/py115"
+
+[tool.setuptools]
+packages = [
+    "py115",
+    "py115._internal",
+    "py115._internal.api",
+    "py115._internal.crypto",
+    "py115._internal.protocol"
+]
+
+[tool.setuptools.dynamic]
+dependencies = {file = "requirements.txt"}
+version = {attr = "py115.VERSION"}
