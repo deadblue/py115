@@ -1,5 +1,7 @@
 __author__ = 'deadblue'
 
+import typing
+
 from py115._internal.protocol.client import Client
 from py115._internal.api import upload, version
 
@@ -52,7 +54,7 @@ class Cloud:
         except:
             return False
 
-    def export_credentail(self) -> (Credential | None):
+    def export_credentail(self) -> typing.Union[Credential, None]:
         """Export current credentail from cloud instance.
 
         Return:
