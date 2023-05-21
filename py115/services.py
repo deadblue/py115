@@ -1,6 +1,7 @@
 __author__ = 'deadblue'
 
 import os
+import os.path
 import typing
 
 from py115._internal.api import offline, file, dir, space, upload
@@ -10,9 +11,7 @@ from py115.types import ClearFlag, Task, File, DownloadTicket, UploadTicket
 
 
 class OfflineService:
-    """
-    Manage offline tasks.
-    """
+    """Offline task manager."""
 
     _client: Client = None
     _app_ver: str = None
@@ -27,7 +26,10 @@ class OfflineService:
         return s
 
     def list(self) -> typing.Generator[Task, None, None]:
-        """Get all offline tasks.
+        """Get all tasks.
+
+        Yields:
+            py115.types.Task: Task object
         """
         spec = offline.ListApi()
         while True:
@@ -41,7 +43,7 @@ class OfflineService:
                 break
 
     def add_url(self, *urls: str) -> typing.Iterable[Task]:
-        """Add tasks by download URL.
+        """Create task(s) from download URL.
 
         Args:
             *urls (str): Download URL, can be a http/ftp/ed2k/magnet link.
@@ -55,7 +57,7 @@ class OfflineService:
         return [Task(r) for r in add_results]
 
     def delete(self, *task_ids: str):
-        """Delete tasks.
+        """Delete task(s).
 
         Args:
             *task_ids (str): The ID of tasks you wants to delete.
@@ -72,6 +74,8 @@ class OfflineService:
 
 
 class StorageService:
+    """Cloud file/directory manager.
+    """
 
     _client: Client = None
     _upload_helper: upload.Helper = None
@@ -99,13 +103,13 @@ class StorageService:
             return (0, 0)
 
     def list(self, dir_id: str = '0') -> typing.Generator[File, None, None]:
-        """Get files under a cloud directory.
+        """Get files under a directory.
 
         Args:
             dir_id (str): Directory ID to list, default is "0" which means root directory.
 
         Yields:
-            py115.types.File: Next file object under the directory.
+            py115.types.File: File object under the directory.
         """
         spec = file.ListApi(dir_id)
         while True:
@@ -123,7 +127,7 @@ class StorageService:
 
         Args:
             target_dir_id (str): ID of target directory where to move files.
-            *file_ids (str): ID of file to be moved.
+            *file_ids (str): ID of files to be moved.
         """
         self._client.execute_api(file.MoveApi(target_dir_id, *file_ids))
 
@@ -138,6 +142,10 @@ class StorageService:
 
     def delete(self, parent_id: str, *file_ids: str):
         """Delete files.
+
+        Args:
+            parent_id (str): ID of directory from where delete files.
+            *file_ids (str): ID of files to be deleted.
         """
         self._client.execute_api(file.DeleteApi(parent_id, *file_ids))
 
@@ -155,7 +163,16 @@ class StorageService:
         result['pid'] = parent_id
         return File(result)
 
-    def download(self, pickcode: str) -> DownloadTicket:
+    def request_download(self, pickcode: str) -> DownloadTicket:
+        """Download file from cloud storage.
+
+        Args:
+            pickcode (str): Pick code of file.
+
+        Returns:
+            py115.types.DownloadTicket: A ticket contains all required fields to 
+            download file from cloud.
+        """
         result = self._client.execute_api(file.DownloadApi(pickcode))
         if len(result.values()) > 0:
             _, down_info = result.popitem()
@@ -166,23 +183,24 @@ class StorageService:
             return ticket
         return None
 
-    def upload_file(self, dir_id: str, file_path: str) -> UploadTicket:
+    def request_upload(self, dir_id: str, file_path: str) -> UploadTicket:
         """Upload local file to cloud storage.
 
         Args:
-            dir_id (str): ID of directory to store the file.
+            dir_id (str): ID of directory where to store the file.
             file_path (str): Path of the local file.
         
         Return:
-            py115.types.UploadTicket: Upload ticket. 
+            py115.types.UploadTicket: A ticket contains all required fields to
+            upload file to cloud, should be used with aliyun-oss-python-sdk.
         """
         if not os.path.exists(file_path):
             return None
         file_name = os.path.basename(file_path)
         with open(file_path, 'rb') as file_io:
-            return self.upload_data(dir_id, file_name, file_io)
+            return self.request_upload_data(dir_id, file_name, file_io)
 
-    def upload_data(
+    def request_upload_data(
             self, 
             dir_id: str, 
             save_name: str, 
@@ -191,12 +209,13 @@ class StorageService:
         """Upload data as a file to cloud storage.
 
         Args:
-            dir_id (str): ID of directory to store the file.
+            dir_id (str): ID of directory where to store the file.
             save_name (str): File name to be saved.
             data_io (BinaryIO): IO stream of data.
 
         Return:
-            py115.types.UploadTicket: Upload ticket.
+            py115.types.UploadTicket: A ticket contains all required fields to
+            upload file to cloud, should be used with aliyun-oss-python-sdk.
         """
         if not (data_io.readable() and data_io.seekable()):
             return None
@@ -209,5 +228,5 @@ class StorageService:
         ticket = UploadTicket(init_result)
         if not ticket.is_done:
             token_result = self._client.execute_api(upload.TokenApi())
-            ticket.set_oss_token(token_result)
+            ticket._set_oss_token(token_result)
         return ticket

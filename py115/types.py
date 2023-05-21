@@ -27,7 +27,7 @@ class Credential:
             d (dict): Dict object.
 
         Returns:
-            Credential: Credential object.
+            py115.types.Credential: Credential object.
         """
         if len(d) == 0 or not ('UID' in d and 'CID' in d and 'SEID' in d):
             return None
@@ -169,7 +169,7 @@ class UploadTicket:
         self._callback_url = raw.get('callback', None)
         self._callback_var = raw.get('callback_var', None)
 
-    def set_oss_token(self, raw:dict):
+    def _set_oss_token(self, raw:dict):
         self._access_key_id = raw.get('access_key_id', None)
         self._access_key_secret = raw.get('access_key_secret', None)
         self._security_token = raw.get('security_token', None)
@@ -193,6 +193,14 @@ class UploadTicket:
     @property
     def callback_var(self) -> str:
         return self._callback_var
+
+    @property
+    def oss_token(self) -> dict:
+        return {
+            'access_key_id': self._access_key_id,
+            'access_key_secret': self._access_key_secret,
+            'security_token': self._security_token
+        }
 
 
 class ClearFlag(IntEnum):

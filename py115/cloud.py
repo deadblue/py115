@@ -11,6 +11,10 @@ from py115.types import Credential
 
 class Cloud:
     """115 cloud service.
+
+    Args:
+        credential (py115.types.Credential): Credential object.
+        protocol_kwargs (dict): Settings for underlying protocol client.
     """
 
     _app_ver: str = None
