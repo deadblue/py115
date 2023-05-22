@@ -11,6 +11,7 @@ Welcome to py115's documentation!
    :caption: Contents:
 
    api
+   example
 
 
 Indices and tables

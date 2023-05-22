@@ -1,7 +1,38 @@
+=============
 API Reference
 =============
 
-.. toctree::
-   :maxdepth: 4
+Module contents
+===============
 
-   py115
+.. automodule:: py115
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Submodules
+==========
+
+py115.cloud module
+------------------
+
+.. automodule:: py115.cloud
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+py115.services module
+---------------------
+
+.. automodule:: py115.services
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+py115.types module
+------------------
+
+.. automodule:: py115.types
+   :members:
+   :undoc-members:
+   :show-inheritance:
