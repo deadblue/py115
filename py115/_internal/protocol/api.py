@@ -1,6 +1,7 @@
 __author__ = 'deadblue'
 
 import json
+import random
 import typing
 import urllib.parse
 
@@ -104,6 +105,8 @@ class ApiSpec:
         else:
             raise ApiException(error_code)
 
+    def get_delay(self) -> float:
+        return random.randint(100, 500) / 1000.0
 
 class M115ApiSpec(ApiSpec):
 

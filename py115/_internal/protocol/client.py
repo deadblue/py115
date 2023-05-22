@@ -25,6 +25,9 @@ class Client:
         self._session.headers.update({
             'User-Agent': self._user_agent
         })
+        # Flow control
+        self._next_request_time = 0.0
+        # Protocol client settings
         verify = kwargs.pop('verify', None)
         if verify is not None and isinstance(verify, bool):
             self._session.verify = verify
@@ -70,19 +73,26 @@ class Client:
                 'k_ec': self._ecc.encode_token(int(time.time()))
             })
         data = spec.payload
-        if data is None:
-            resp = self._session.get(url=spec.url, params=spec.qs)
-        else:
-            if spec.use_ec:
-                data = self._ecc.encode(data)
-            resp = self._session.post(
-                url=spec.url, 
-                params=spec.qs, 
-                data=data,
-                headers={
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
-            )
+        # Flow control
+        wait_time = self._next_request_time - time.time()
+        if wait_time > 0:
+            time.sleep(wait_time)
+        try:
+            if data is None:
+                resp = self._session.get(url=spec.url, params=spec.qs)
+            else:
+                if spec.use_ec:
+                    data = self._ecc.encode(data)
+                resp = self._session.post(
+                    url=spec.url, 
+                    params=spec.qs, 
+                    data=data,
+                    headers={
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                )
+        finally:
+            self._next_request_time = time.time() + spec.get_delay()
         if spec.use_ec:
             result = json.loads(self._ecc.decode(resp.content))
         else:
