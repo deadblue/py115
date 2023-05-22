@@ -181,14 +181,20 @@ class StorageService:
             download file from cloud.
         """
         result = self._client.execute_api(file.DownloadApi(pickcode))
-        if len(result.values()) > 0:
-            _, down_info = result.popitem()
-            ticket = DownloadTicket(down_info)
-            ticket.headers.update({
-                'User-Agent': self._client.user_agent
-            })
-            return ticket
-        return None
+        if len(result.values()) == 0:
+            return None
+        # Get download info
+        _, down_info = result.popitem()
+        # Grab required download header
+        cookies = self._client.export_cookies()
+        headers = {
+            'User-Agent': self._client.user_agent,
+            'Cookie': '; '.join([
+                f'{k}={v}' for k, v in cookies.items()
+            ])
+        }
+        ticket = DownloadTicket(down_info, headers)
+        return ticket
 
     def request_upload(self, dir_id: str, file_path: str) -> UploadTicket:
         """Upload local file to cloud storage.
