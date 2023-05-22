@@ -51,8 +51,10 @@ class OfflineService:
         Return:
             Iterable[py115.types.Task]: Task list for the download URLs.
         """
+        if len(urls) == 0:
+            return []
         add_results = self._client.execute_api(offline.AddUrlsApi(
-            self._app_ver, self._user_id, *urls
+            self._app_ver, self._user_id, urls
         ))
         return [Task(r) for r in add_results]
 
@@ -62,7 +64,9 @@ class OfflineService:
         Args:
             *task_ids (str): The ID of tasks you wants to delete.
         """
-        self._client.execute_api(offline.DeleteApi(*task_ids))
+        if len(task_ids) == 0:
+            return
+        self._client.execute_api(offline.DeleteApi(task_ids))
 
     def clear(self, flag: ClearFlag = ClearFlag.Done):
         """Clear tasks.
@@ -129,7 +133,9 @@ class StorageService:
             target_dir_id (str): ID of target directory where to move files.
             *file_ids (str): ID of files to be moved.
         """
-        self._client.execute_api(file.MoveApi(target_dir_id, *file_ids))
+        if len(file_ids) == 0:
+            return
+        self._client.execute_api(file.MoveApi(target_dir_id, file_ids))
 
     def rename(self, file_id: str, new_name: str):
         """Rename file.
@@ -140,14 +146,15 @@ class StorageService:
         """
         self._client.execute_api(file.RenameApi(file_id, new_name))
 
-    def delete(self, parent_id: str, *file_ids: str):
+    def delete(self, *file_ids: str):
         """Delete files.
 
         Args:
-            parent_id (str): ID of directory from where delete files.
             *file_ids (str): ID of files to be deleted.
         """
-        self._client.execute_api(file.DeleteApi(parent_id, *file_ids))
+        if len(file_ids) == 0:
+            return
+        self._client.execute_api(file.DeleteApi(file_ids))
 
     def make_dir(self, parent_id: str, name: str) -> File:
         """Make new directory under a directory.

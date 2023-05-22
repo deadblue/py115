@@ -35,7 +35,7 @@ class ListApi(api.ApiSpec):
 
 class DeleteApi(api.ApiSpec):
 
-    def __init__(self, *task_ids: str) -> None:
+    def __init__(self, task_ids: typing.Iterable[str]) -> None:
         super().__init__('https://lixian.115.com/lixian/', True)
         self.update_qs({
             'ct': 'lixian',
@@ -62,7 +62,7 @@ class ClearApi(api.ApiSpec):
 
 class AddUrlsApi(api.M115ApiSpec):
     
-    def __init__(self, app_ver: str, user_id: int, *urls: str, **kwargs) -> None:
+    def __init__(self, app_ver: str, user_id: int, urls: typing.Iterable[str], **kwargs) -> None:
         super().__init__('https://lixian.115.com/lixianssp/', True)
         self.update_qs({
             'ac': 'add_task_urls'

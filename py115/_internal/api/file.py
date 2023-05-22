@@ -1,6 +1,7 @@
 __author__ = 'deadblue'
 
 import time
+import typing
 
 from py115._internal.protocol import api
 
@@ -56,10 +57,9 @@ class ListApi(api.ApiSpec):
 
 class DeleteApi(api.ApiSpec):
 
-    def __init__(self, parent_id: str, *file_ids: str) -> None:
+    def __init__(self, file_ids: typing.Iterable[str]) -> None:
         super().__init__('https://webapi.115.com/rb/delete')
         self.update_from({
-            'pid': parent_id,
             'fid': file_ids,
             'ignore_warn': '1'
         })
@@ -67,7 +67,7 @@ class DeleteApi(api.ApiSpec):
 
 class MoveApi(api.ApiSpec):
 
-    def __init__(self, parent_id: str, *file_ids: str) -> None:
+    def __init__(self, parent_id: str, file_ids: typing.Iterable[str]) -> None:
         super().__init__('https://webapi.115.com/files/move')
         self.update_from({
             'pid': parent_id,
