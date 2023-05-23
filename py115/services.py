@@ -235,8 +235,7 @@ class StorageService:
             file_io=data_io,
             helper=self._upload_helper
         ))
-        ticket = UploadTicket._create(init_result)
-        if ticket is not None and not ticket.is_done:
+        token_result = None
+        if not init_result['done']:
             token_result = self._client.execute_api(upload.TokenApi())
-            ticket._set_oss_token(token_result)
-        return ticket
+        return UploadTicket._create(init_result, token_result)

@@ -10,9 +10,9 @@ class Credential:
     """Credential contains required information to identify user.
 
     Args:
-        uid (str): The "UID" value from cookie.
-        cid (str): The "CID" value from cookie.
-        seid (str): The "SEID" value from cookie.
+        uid (str): The "UID" value in cookies.
+        cid (str): The "CID" value in cookies.
+        seid (str): The "SEID" value in cookies.
     """
 
     _uid: str = None
@@ -128,109 +128,91 @@ class DownloadTicket:
     """
     DownloadTicket contains required parameters to download a file from 
     cloud storage.
+
+    Please check examples for detail usage.
     """
 
-    _file_name: str = None
-    _file_szie: int = None
-    _url: str = None
-    _headers: dict = None
+    file_name: str
+    """Base name of the file."""
+
+    file_size: int
+    """Size of the file."""
+
+    url: str
+    """Download URL."""
+
+    headers: dict
+    """Required headers that should be used with download URL."""
 
     @classmethod
     def _create(cls, raw: dict, header: dict):
         r = cls()
-        r._file_name = raw.get('file_name')
-        r._file_szie = raw.get('file_size')
-        r._url = raw.get('url')
-        r._headers = header.copy()
+        r.file_name = raw.get('file_name')
+        r.file_size = raw.get('file_size')
+        r.url = raw.get('url')
+        r.headers = header.copy()
         return r
 
-    @property
-    def file_name(self) -> str:
-        """Base name of the file."""
-        return self._file_name
-    
-    @property
-    def file_size(self) -> int:
-        """Size of the file."""
-        return self._file_szie
-    
-    @property
-    def url(self):
-        """Download URL."""
-        return self._url
-    
-    @property
-    def headers(self) -> dict:
-        """Required headers that should be used with download URL."""
-        return self._headers
-
     def __str__(self) -> str:
-        return self._url
+        return self.url
 
 
 class UploadTicket:
     """
     UploadTicket contains required parameters to upload a file to 
     cloud storage.
+
+    Please check examples for detial usage.
     """
 
-    _done: bool = None
-    _bucket: str = None
-    _object: str = None
-    _callback: str = None
-    _callback_var: str = None
-    _access_key_id: str = None
-    _access_key_secret: str = None
-    _security_token: str = None
+    is_done: bool
+    """Is file already uploaded."""
+
+    oss_endpoint: str
+    """OSS endpoint address."""
+
+    oss_token: dict
+    """OSS token"""
+
+    bucket_name: str
+    """OSS bucket name."""
+
+    object_key: str
+    """OSS object key."""
+
+    headers: dict
+    """Required headers that should be used in upload."""
+
+    expiration: datetime
+    """Expiration time of this ticket."""
 
     @classmethod
-    def _create(cls, raw: dict):
-        if 'done' not in raw:
-            return None
+    def _create(cls, raw: dict, token: dict):
         r = cls()
-        r._done = raw['done']
+        r.is_done = raw['done']
         if not r.is_done:
-            r._bucket = raw.get('bucket', None)
-            r._object = raw.get('object', None)
-            r._callback = raw.get('callback', None)
-            r._callback_var = raw.get('callback_var', None)
+            r.oss_endpoint = oss.ENDPOINT
+            r.oss_token = {
+                'access_key_id': token.get('access_key_id'),
+                'access_key_secret': token.get('access_key_secret'),
+                'security_token': token.get('security_token')
+            }
+            r.bucket_name = raw.get('bucket')
+            r.object_key = raw.get('object')
+            r.headers = {
+                'x-oss-callback': oss.encode_header_value(raw.get('callback')),
+                'x-oss-callback-var': oss.encode_header_value(raw.get('callback_var'))
+            }
+            r.expiration = token.get('expiration')
         return r
+    
+    def is_valid(self) -> bool:
+        """Check whether the ticket is valid.
 
-    def _set_oss_token(self, raw:dict):
-        self._access_key_id = raw.get('access_key_id', None)
-        self._access_key_secret = raw.get('access_key_secret', None)
-        self._security_token = raw.get('security_token', None)
-
-    @property
-    def is_done(self) -> bool:
-        return self._done
-
-    @property
-    def bucket_name(self) -> str:
-        return self._bucket
-
-    @property
-    def object_key(self) -> str:
-        return self._object
-
-    @property
-    def headers(self) -> dict:
-        return {
-            'x-oss-callback': oss.encode_header_value(self._callback),
-            'x-oss-callback-var': oss.encode_header_value(self._callback_var)
-        }
-
-    @property
-    def oss_endpoint(self) -> str:
-        return oss.ENDPOINT
-
-    @property
-    def oss_token(self) -> dict:
-        return {
-            'access_key_id': self._access_key_id,
-            'access_key_secret': self._access_key_secret,
-            'security_token': self._security_token
-        }
+        Returns:
+            bool: Valid flag.
+        """
+        return datetime.now() < self.expiration
 
 
 class ClearFlag(IntEnum):
