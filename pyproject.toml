@@ -25,6 +25,7 @@ dynamic = ["dependencies", "version"]
 [project.urls]
 homepage = "https://github.com/deadblue/py115"
 source = "https://github.com/deadblue/py115"
+documentation = "https://py115.readthedocs.io/en/latest/"
 
 [tool.setuptools]
 packages = [
