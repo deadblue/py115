@@ -3,11 +3,16 @@ __author__ = 'deadblue'
 from datetime import datetime
 from enum import IntEnum
 
-from py115._internal import utils
+from py115._internal import oss, utils
 
 
 class Credential:
     """Credential contains required information to identify user.
+
+    Args:
+        uid (str): The "UID" value from cookie.
+        cid (str): The "CID" value from cookie.
+        seid (str): The "SEID" value from cookie.
     """
 
     _uid: str = None
@@ -121,53 +126,75 @@ class File:
 
 class DownloadTicket:
     """
-    DownloadTicket contains required parameters to download a file 
-    from cloud storage.
+    DownloadTicket contains required parameters to download a file from 
+    cloud storage.
     """
 
-    def __init__(self, raw: dict, headers: dict = {}) -> None:
-        self._name = raw.get('file_name', '')
-        self._size = int(raw.get('file_size', 0))
-        self._url = raw.get('url', {}).get('url', '')
-        self._headers = headers
+    _file_name: str = None
+    _file_szie: int = None
+    _url: str = None
+    _headers: dict = None
+
+    @classmethod
+    def _create(cls, raw: dict, header: dict):
+        r = cls()
+        r._file_name = raw.get('file_name')
+        r._file_szie = raw.get('file_size')
+        r._url = raw.get('url')
+        r._headers = header.copy()
+        return r
 
     @property
-    def url(self) -> str:
+    def file_name(self) -> str:
+        """Base name of the file."""
+        return self._file_name
+    
+    @property
+    def file_size(self) -> int:
+        """Size of the file."""
+        return self._file_szie
+    
+    @property
+    def url(self):
+        """Download URL."""
         return self._url
     
     @property
     def headers(self) -> dict:
+        """Required headers that should be used with download URL."""
         return self._headers
 
-    @property
-    def file_name(self) -> str :
-        return self._name
-
-    @property
-    def file_size(self) -> int:
-        return self._size
-    
     def __str__(self) -> str:
         return self._url
 
 
 class UploadTicket:
+    """
+    UploadTicket contains required parameters to upload a file to 
+    cloud storage.
+    """
 
     _done: bool = None
     _bucket: str = None
     _object: str = None
-    _callback_url: str = None
+    _callback: str = None
     _callback_var: str = None
     _access_key_id: str = None
     _access_key_secret: str = None
     _security_token: str = None
 
-    def __init__(self, raw: dict) -> None:
-        self._done = raw.get('done', False)
-        self._bucket = raw.get('bucket', None)
-        self._object = raw.get('object', None)
-        self._callback_url = raw.get('callback', None)
-        self._callback_var = raw.get('callback_var', None)
+    @classmethod
+    def _create(cls, raw: dict):
+        if 'done' not in raw:
+            return None
+        r = cls()
+        r._done = raw['done']
+        if not r.is_done:
+            r._bucket = raw.get('bucket', None)
+            r._object = raw.get('object', None)
+            r._callback = raw.get('callback', None)
+            r._callback_var = raw.get('callback_var', None)
+        return r
 
     def _set_oss_token(self, raw:dict):
         self._access_key_id = raw.get('access_key_id', None)
@@ -179,20 +206,23 @@ class UploadTicket:
         return self._done
 
     @property
-    def bucket(self) -> str:
+    def bucket_name(self) -> str:
         return self._bucket
 
     @property
-    def object(self) -> str:
+    def object_key(self) -> str:
         return self._object
 
     @property
-    def callback_url(self) -> str:
-        return self._callback_url
-    
+    def headers(self) -> dict:
+        return {
+            'x-oss-callback': oss.encode_header_value(self._callback),
+            'x-oss-callback-var': oss.encode_header_value(self._callback_var)
+        }
+
     @property
-    def callback_var(self) -> str:
-        return self._callback_var
+    def oss_endpoint(self) -> str:
+        return oss.ENDPOINT
 
     @property
     def oss_token(self) -> dict:

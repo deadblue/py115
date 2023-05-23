@@ -181,20 +181,17 @@ class StorageService:
             download file from cloud.
         """
         result = self._client.execute_api(file.DownloadApi(pickcode))
-        if len(result.values()) == 0:
+        if result is None or 'url' not in result:
             return None
-        # Get download info
-        _, down_info = result.popitem()
-        # Grab required download header
-        cookies = self._client.export_cookies()
+        # Required headers for downloading
+        cookies = self._client.export_cookies(url=result['url'])
         headers = {
             'User-Agent': self._client.user_agent,
             'Cookie': '; '.join([
                 f'{k}={v}' for k, v in cookies.items()
             ])
         }
-        ticket = DownloadTicket(down_info, headers)
-        return ticket
+        return DownloadTicket._create(result, headers)
 
     def request_upload(self, dir_id: str, file_path: str) -> UploadTicket:
         """Upload local file to cloud storage.
@@ -238,8 +235,8 @@ class StorageService:
             file_io=data_io,
             helper=self._upload_helper
         ))
-        ticket = UploadTicket(init_result)
-        if not ticket.is_done:
+        ticket = UploadTicket._create(init_result)
+        if ticket is not None and not ticket.is_done:
             token_result = self._client.execute_api(upload.TokenApi())
             ticket._set_oss_token(token_result)
         return ticket

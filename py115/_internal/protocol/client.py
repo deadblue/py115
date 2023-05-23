@@ -4,6 +4,7 @@ import json
 import logging
 import time
 import warnings
+from urllib.parse import urlparse
 from urllib3.exceptions import InsecureRequestWarning
 
 import requests
@@ -28,14 +29,17 @@ class Client:
         # Flow control
         self._next_request_time = 0.0
         # Protocol client settings
+        proxy_addr = kwargs.pop('proxy', None)
+        if proxy_addr is not None and isinstance(proxy_addr, str):
+            self._session.proxies = {
+                'http': proxy_addr,
+                'https': proxy_addr
+            }
         verify = kwargs.pop('verify', None)
         if verify is not None and isinstance(verify, bool):
             self._session.verify = verify
             if not verify:
                 warnings.simplefilter('ignore', category=InsecureRequestWarning)
-        proxies = kwargs.pop('proxies', None)
-        if proxies is not None and isinstance(proxies, dict):
-            self._session.proxies = proxies
 
     def import_cookies(self, cookies: dict):
         for name, value in cookies.items():
@@ -45,10 +49,28 @@ class Client:
                 path='/'
             )
 
-    def export_cookies(self) -> dict:
-        return self._session.cookies.get_dict(
-            domain='.115.com', path='/'
-        )
+    def export_cookies(self, url: str = None) -> dict:
+        req_domain, req_path = '.115.com', '/'
+        if url is not None:
+            result = urlparse(url)
+            req_domain = f'.{result.hostname}'
+            req_path = f'{result.path}/'
+
+        cookie_dict = {}
+        for cookie in self._session.cookies:
+            # Check domain
+            cookie_domain = cookie.domain
+            if not cookie_domain.startswith('.'):
+                cookie_domain = f'.{cookie_domain}'
+            if not req_domain.endswith(cookie_domain): continue
+            # Check path
+            cookie_path = cookie.path
+            if not cookie_path.endswith('/'):
+                cookie_path = f'{cookie_path}/'
+            if not req_path.startswith(cookie_path): continue
+            # Add cookie to dict
+            cookie_dict[cookie.name] = cookie.value
+        return cookie_dict
 
     def setup_user_agent(self, app_version: str):
         self._user_agent = 'Mozilla/5.0 115Desktop/%s' % app_version

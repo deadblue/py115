@@ -95,3 +95,16 @@ class DownloadApi(api.M115ApiSpec):
         self.update_from({
             'pickcode': pickcode
         })
+
+    def parse_result(self, result: dict):
+        result = super().parse_result(result)
+        if len(result) == 0:
+            return None
+        file_id, down_info = result.popitem()
+        result = {
+            'file_id': file_id,
+            'file_name': down_info['file_name'],
+            'fize_size': int(down_info['file_size']),
+            'url': down_info['url']['url'].replace('http://', 'https://')
+        }
+        return result
