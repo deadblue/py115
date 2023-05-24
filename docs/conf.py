@@ -31,6 +31,7 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # Extension configurations
+autodoc_member_order = 'bysource'
 autodoc_typehints = 'description'
 napoleon_numpy_docstring = False
 
