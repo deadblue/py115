@@ -8,7 +8,7 @@ authors = [
 ]
 description = "Python SDK for 115 cloud storage service."
 keywords = [
-    "115", "sdk"
+    "115", "cloud-storage", "sdk"
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -20,7 +20,7 @@ classifiers = [
 ]
 license = {file = "LICENSE"}
 requires-python = ">=3.9"
-dynamic = ["dependencies", "version"]
+dynamic = ["dependencies", "readme", "version"]
 
 [project.urls]
 homepage = "https://github.com/deadblue/py115"
@@ -38,4 +38,5 @@ packages = [
 
 [tool.setuptools.dynamic]
 dependencies = {file = "requirements.txt"}
+readme = {file = "README.rst"}
 version = {attr = "py115.VERSION"}
