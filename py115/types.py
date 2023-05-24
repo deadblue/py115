@@ -6,7 +6,18 @@ from enum import IntEnum
 from py115._internal import oss, utils
 
 
-class Credential:
+class _Base:
+    """Base clase for all types."""
+
+    def __repr__(self) -> str:
+        cls_name = type(self).__name__
+        attrs = ', '.join([
+            f'{k}={v}' for k, v in self.__dict__.items()
+        ])
+        return f'{cls_name}({attrs})'
+
+
+class Credential(_Base):
     """Credential contains required information to identify user.
 
     Args:
@@ -54,77 +65,67 @@ class Credential:
             'SEID': self._seid,
         }
 
-    def __repr__(self) -> str:
-        return f'UID={self._uid}, CID={self._cid}, SEID={self._seid}'
+    # def __repr__(self) -> str:
+    #     return f'Credential(UID={self._uid}, CID={self._cid}, SEID={self._seid})'
 
 
-class File:
-    """
-    File represents a cloud file.
-    """
+class File(_Base):
+    """File represents a cloud file or directory."""
 
-    def __init__(self, raw: dict) -> None:
+    file_id: str
+    """Unique ID of the file on cloud."""
+
+    parent_id: str
+    """File ID of the parent directory."""
+
+    name: str
+    """Base name."""
+
+    size: int
+    """Size in bytes."""
+
+    modified_time: datetime
+    """Last modified datetime."""
+
+    sha1: str
+    """SHA-1 hash of the file in HEX encoding."""
+
+    pickcode: str
+    """Pickcode to download the file."""
+
+    is_dir: bool
+    """Is file a directory."""
+
+    @classmethod
+    def _create(cls, raw: dict):
         category_id = raw.get('cid')
         file_id = raw.get('fid')
         parent_id = raw.get('pid')
-        self._is_dir = file_id is None
-        if self._is_dir:
-            self._file_id = category_id
-            self._parent_id = parent_id
-            self._size = 0
-            self._sha1, self._pc = None, None
+
+        r = cls()
+        r.is_dir = file_id is None
+        r.name = raw.get('n')
+        r.modified_time = utils.parse_datetime_str(raw.get('t'))
+        if r.is_dir:
+            r.file_id = category_id
+            r.parent_id = parent_id
+            r.size, r.sha1, r.pickcode = 0, None, None
         else:
-            self._file_id = file_id
-            self._parent_id = category_id
-            self._size = raw.get('s')
-            self._sha1 = raw.get('sha')
-            self._pc = raw.get('pc')
-        self._name = raw.get('n')
-        self._time = utils.parse_datetime_str(raw.get('t'))
-
-    @property
-    def file_id(self) -> str:
-        return self._file_id
-
-    @property
-    def parent_id(self) -> str:
-        return self._parent_id
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def size(self) -> int:
-        return self._size
-
-    @property
-    def modified_time(self) -> datetime:
-        return self._time
-    
-    @property
-    def sha1(self) -> str:
-        return self._sha1
-
-    @property
-    def pickcode(self) -> str:
-        return self._pc
-
-    @property
-    def is_dir(self) -> bool:
-        return self._is_dir
-
-    def __repr__(self) -> str:
-        return f'ID={self._file_id}, Name={self._name}'
+            r.file_id = file_id
+            r.parent_id = category_id
+            r.size = raw.get('s')
+            r.sha1 = raw.get('sha')
+            r.pickcode = raw.get('pc')
+        return r
 
     def __str__(self) -> str:
-        if self._is_dir:
-            return f'{self._name}/'
+        if self.is_dir:
+            return f'{self.name}/'
         else:
-            return self._name
+            return self.name
 
 
-class DownloadTicket:
+class DownloadTicket(_Base):
     """
     DownloadTicket contains required parameters to download a file from 
     cloud storage.
@@ -153,11 +154,8 @@ class DownloadTicket:
         r.headers = header.copy()
         return r
 
-    def __str__(self) -> str:
-        return self.url
 
-
-class UploadTicket:
+class UploadTicket(_Base):
     """
     UploadTicket contains required parameters to upload a file to 
     cloud storage.
@@ -215,70 +213,68 @@ class UploadTicket:
         return datetime.now() < self.expiration
 
 
-class ClearFlag(IntEnum):
-    Done = 0
-    All = 1
-    Failed = 2
-    Running = 3
+class TaskStatus(IntEnum):
+    Running = 1
+    """Task is running."""
+    Complete = 2
+    """Task is complete."""
+    Failed = -1
+    """Task is failed."""
+    Unknown = 0
+    """Unknown status?"""
 
 
-class Task:
-    """
-    Task represents an offline task.
-    """
+class Task(_Base):
+    """Task represents an offline task."""
 
-    def __init__(self, raw: dict):
-        self._id = raw.get('info_hash')
-        self._name = raw.get('name', None)
-        self._size = raw.get('size', -1)
-        self._time = utils.make_datetime(raw.get('add_time', 0))
-        self._precent = float(raw.get('percentDone', 0))
-        self._status = raw.get('status', 0)
-        # Get File ID
+    task_id: str
+    """Unique ID of the task."""
+
+    name: str
+    """Task name."""
+
+    size: int
+    """Total size to be downloaded."""
+
+    created_time: datetime
+    """Task created time."""
+
+    percent: float
+    """Precentage of the download, 0~100."""
+
+    file_id: str
+    """Downloaded file ID of the task, may be None if the task does not finish."""
+
+    file_is_dir: bool
+    """Is the downloaded file a directory."""
+
+    status: TaskStatus
+    """Task status."""
+
+    @classmethod
+    def _create(cls, raw: dict):
+        r = cls()
+        r.task_id = raw.get('info_hash')
+        r.name = raw.get('name')
+        r.size = raw.get('size', -1)
+        r.created_time = utils.make_datetime(raw.get('add_time', 0))
+        r.precent = float(raw.get('percentDone', 0))
+        r.status = TaskStatus(raw.get('status', 0))
+
         file_id = raw.get('file_id', '')
         del_file_id = raw.get('delete_file_id', '')
-        self._file_id = del_file_id
-        self._is_dir = file_id != '' and file_id == del_file_id
+        r.file_id = del_file_id
+        r.file_is_dir = file_id != '' and file_id == del_file_id
+        return r
 
-    @property
-    def task_id(self) -> str:
-        return self._id
+    def is_complete(self) -> bool:
+        """Check is task complete."""
+        return self.status == TaskStatus.Complete
 
-    @property
-    def name(self) -> str:
-        return self._name
-    
-    @property
-    def size(self) -> int:
-        return self._size
-
-    @property
-    def added_time(self) -> datetime:
-        return self._time
-
-    @property
-    def percent(self) -> float:
-        return self._precent
-
-    @property
-    def file_id(self) -> str:
-        return self._file_id
-
-    @property
-    def file_is_dir(self) -> bool:
-        return self._is_dir
-
-    @property
-    def is_running(self) -> bool:
-        return self._status == 1
-
-    @property
-    def is_done(self) -> bool:
-        return self._status == 2
-
-    @property
     def is_failed(self) -> bool:
-        return self._status == -1
+        """Check is task failed."""
+        return self.status == TaskStatus.Failed
 
-    def __repr__(self) -> str:
-        return f'ID={self._id}, Name="{self._name}", Size={self._size}, Percent={self._precent:0.2f}'
+    def is_running(self) -> bool:
+        """Check is task still running."""
+        return self.status == TaskStatus.Running

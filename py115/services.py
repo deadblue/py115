@@ -7,7 +7,14 @@ import typing
 from py115._internal.api import offline, file, dir, space, upload
 from py115._internal.protocol.client import Client
 
-from py115.types import ClearFlag, Task, File, DownloadTicket, UploadTicket
+from py115.types import TaskStatus, Task, File, DownloadTicket, UploadTicket
+
+
+_CLEAR_FLAG_MAPPING = {
+    TaskStatus.Complete: 1,
+    TaskStatus.Failed: 2,
+    TaskStatus.Running: 3
+}
 
 
 class OfflineService:
@@ -35,7 +42,7 @@ class OfflineService:
         while True:
             result = self._client.execute_api(spec)
             for t in result['tasks']:
-                yield Task(t)
+                yield Task._create(t)
             page, page_count = result['page'], result['page_count']
             if page < page_count:
                 spec.set_page(page + 1)
@@ -56,7 +63,7 @@ class OfflineService:
         add_results = self._client.execute_api(offline.AddUrlsApi(
             self._app_ver, self._user_id, urls
         ))
-        return [Task(r) for r in add_results]
+        return [Task._create(r) for r in add_results]
 
     def delete(self, *task_ids: str):
         """Delete task(s).
@@ -68,13 +75,21 @@ class OfflineService:
             return
         self._client.execute_api(offline.DeleteApi(task_ids))
 
-    def clear(self, flag: ClearFlag = ClearFlag.Done):
+    def clear(self, status: TaskStatus = TaskStatus.Complete):
         """Clear tasks.
-        
+
         Args:
-            flag (py115.types.ClearFlag): Tasks that matches this flag will be delete.
+            status (py115.types.TaskStatus): 
+                Tasks in given status will be cleared. Set status to None to 
+                clear all tasks.
         """
-        self._client.execute_api(offline.ClearApi(flag.value))
+        if status is None:
+            # Clear all tasks
+            flag = 1
+        else:
+            # Default to clear complete tasks.
+            flag = _CLEAR_FLAG_MAPPING.get(status, 0)
+        self._client.execute_api(offline.ClearApi(flag))
 
 
 class StorageService:
@@ -119,7 +134,7 @@ class StorageService:
         while True:
             result = self._client.execute_api(spec)
             for f in result['files']:
-                yield File(f)
+                yield File._create(f)
             next_offset = result['offset'] + len(result['files'])
             if next_offset >= result['count']:
                 break
@@ -168,7 +183,7 @@ class StorageService:
         """
         result = self._client.execute_api(dir.AddApi(parent_id, name))
         result['pid'] = parent_id
-        return File(result)
+        return File._create(result)
 
     def request_download(self, pickcode: str) -> DownloadTicket:
         """Download file from cloud storage.
