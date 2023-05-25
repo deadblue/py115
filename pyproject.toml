@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "py115"
@@ -7,6 +8,8 @@ authors = [
     {name = "deadblue", email = "public@dead.blue"}
 ]
 description = "Python SDK for 115 cloud storage service."
+readme = "README.rst"
+license = { file = "LICENSE" }
 keywords = [
     "115", "cloud-storage", "sdk"
 ]
@@ -18,14 +21,12 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Software Development :: Libraries",
 ]
-license = {file = "LICENSE"}
 requires-python = ">=3.9"
-dynamic = ["dependencies", "readme", "version"]
+dynamic = ["dependencies", "version"]
 
 [project.urls]
-homepage = "https://github.com/deadblue/py115"
-source = "https://github.com/deadblue/py115"
-documentation = "https://py115.readthedocs.io/en/latest/"
+Homepage = "https://github.com/deadblue/py115"
+Documentation = "https://py115.readthedocs.io/en/latest/"
 
 [tool.setuptools]
 packages = [
@@ -38,5 +39,4 @@ packages = [
 
 [tool.setuptools.dynamic]
 dependencies = {file = "requirements.txt"}
-readme = {file = "README.rst"}
 version = {attr = "py115.VERSION"}

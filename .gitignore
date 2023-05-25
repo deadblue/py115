@@ -7,3 +7,6 @@ test.py
 test-*.py
 
 docs/_build
+
+dist
+*.egg-info
