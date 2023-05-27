@@ -2,6 +2,7 @@ __author__ = 'deadblue'
 
 import typing
 
+from py115._internal.api import m115
 from py115._internal.protocol import api
 
 
@@ -60,7 +61,7 @@ class ClearApi(api.ApiSpec):
         })
 
 
-class AddUrlsApi(api.M115ApiSpec):
+class AddUrlsApi(m115.M115ApiSpec):
     
     def __init__(self, app_ver: str, user_id: int, urls: typing.Iterable[str], **kwargs) -> None:
         super().__init__('https://lixian.115.com/lixianssp/', True)

@@ -3,6 +3,7 @@ __author__ = 'deadblue'
 import time
 import typing
 
+from py115._internal.api import m115
 from py115._internal.protocol import api
 
 
@@ -85,7 +86,7 @@ class RenameApi(api.ApiSpec):
         })
 
 
-class DownloadApi(api.M115ApiSpec):
+class DownloadApi(m115.M115ApiSpec):
 
     def __init__(self, pickcode: str) -> None:
         super().__init__('https://proapi.115.com/app/chrome/downurl', True)
@@ -101,10 +102,12 @@ class DownloadApi(api.M115ApiSpec):
         if len(result) == 0:
             return None
         file_id, down_info = result.popitem()
-        result = {
-            'file_id': file_id,
-            'file_name': down_info['file_name'],
-            'fize_size': int(down_info['file_size']),
-            'url': down_info['url']['url'].replace('http://', 'https://')
-        }
-        return result
+        if 'url' in down_info and isinstance(down_info['url'], dict):
+            return {
+                'file_id': file_id,
+                'file_name': down_info['file_name'],
+                'fize_size': int(down_info['file_size']),
+                'url': down_info['url']['url'].replace('http://', 'https://')
+            }
+        else:
+            return None
