@@ -1,9 +1,17 @@
 __author__ = 'deadblue'
 
 from datetime import datetime
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 
 from py115._internal import oss, utils
+
+
+class LoginPlatform(StrEnum):
+
+    Web = "web"
+    Mac = "mac"
+    Linux = "linux"
+    Windows = "windows"
 
 
 class _Base:
@@ -64,9 +72,6 @@ class Credential(_Base):
             'CID': self._cid,
             'SEID': self._seid,
         }
-
-    # def __repr__(self) -> str:
-    #     return f'Credential(UID={self._uid}, CID={self._cid}, SEID={self._seid})'
 
 
 class File(_Base):

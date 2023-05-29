@@ -3,13 +3,13 @@ __author__ = 'deadblue'
 import typing
 
 from py115._internal.protocol.client import Client
-from py115._internal.api import upload, version
+from py115._internal.api import qrcode, upload, version
 
-from py115 import services
-from py115.types import Credential
+from py115 import login, services
+from py115.types import Credential, LoginPlatform
 
 
-class Cloud:
+class Cloud(login._Handler):
     """115 cloud service.
 
     Args:
@@ -48,15 +48,7 @@ class Cloud:
             bool: Is credential valid.
         """
         self._client.import_cookies(credential.to_dict())
-        try:
-        # Initialize upload helper
-            user_id, user_key = self._client.execute_api(upload.InfoApi())
-            self._upload_helper = upload.Helper(
-                self._app_ver, user_id, user_key
-            )
-            return True
-        except:
-            return False
+        return self._on_login()
 
     def export_credentail(self) -> typing.Union[Credential, None]:
         """Export current credentail from cloud instance.
@@ -68,6 +60,32 @@ class Cloud:
         return Credential.from_dict(
             self._client.export_cookies()
         )
+
+    def qrcode_login(self, platform: LoginPlatform) -> login.QrcodeSession:
+        """Start QRcode login session.
+
+        Returns:
+            py115.types.QrcodeSession: QRcode login session.
+        """
+        token = self._client.execute_api(qrcode.TokenApi(platform.value))
+        return login.QrcodeSession._create(
+            client=self._client,
+            handler=self,
+            platform=platform.value,
+            uid=token.get('uid'), 
+            time=token.get('time'),
+            sign=token.get('sign')
+        )
+
+    def _on_login(self) -> bool:
+        try:
+            user_id, user_key = self._client.execute_api(upload.InfoApi())
+            self._upload_helper = upload.Helper(
+                self._app_ver, user_id, user_key
+            )
+            return True
+        except:
+            return False
 
     def offline(self) -> services.OfflineService:
         """Get offline service.
