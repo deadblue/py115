@@ -1,13 +1,19 @@
 __author__ = 'deadblue'
 
+import logging
 
 from py115._internal.api import qrcode
 from py115._internal.protocol.client import Client
+
+
+_logger = logging.getLogger(__name__)
+
 
 class _Handler:
 
     def _on_login(self) -> bool:
         return True
+
 
 class QrcodeSession:
 
@@ -57,4 +63,4 @@ class QrcodeSession:
                 ))
                 return self._handler._on_login()
             else:
-                print(f'Continue waiting for status: {status}')
+                _logger.debug('Continue waiting, status: %d', status)
