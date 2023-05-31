@@ -64,8 +64,11 @@ class Cloud(login._Handler):
     def qrcode_login(self, platform: LoginPlatform) -> login.QrcodeSession:
         """Start QRcode login session.
 
+        Args:
+            platform (py115.types.LoginPlatform): Platform to login.
+
         Returns:
-            py115.types.QrcodeSession: QRcode login session.
+            py115.login.QrcodeSession: QRcode login session.
         """
         token = self._client.execute_api(qrcode.TokenApi(platform.value))
         return login.QrcodeSession._create(
