@@ -32,7 +32,7 @@ class ListApi(api.ApiSpec):
         else:
             return 'https://webapi.115.com/files'
 
-    def parse_result(self, result: dict):
+    def parse_result(self, result: dict) -> dict:
         if result.get('state', False):
             return {
                 'count': result.get('count'),
@@ -49,6 +49,35 @@ class ListApi(api.ApiSpec):
                 raise api.RetryException()
             else:
                 raise api.ApiException(err_code)
+
+    def set_offset(self, offset: int):
+        self.update_qs({
+            'offset': str(offset)
+        })
+
+
+class SearchApi(api.ApiSpec):
+
+    def __init__(self, keyword: str, dir_id: str) -> None:
+        super().__init__('https://webapi.115.com/files/search')
+        self.update_qs({
+            'aid': '1',
+            'cid': dir_id,
+            'offset': '0',
+            'limit': '115',
+            'format': 'json',
+            'search_value': keyword
+        })
+    
+    def parse_result(self, result: dict) -> dict:
+        if result.get('state', False):
+            return {
+                'count': result.get('count'),
+                'offset': result.get('offset'),
+                'files': result.get('data')
+            }
+        else:
+            raise api.ApiException(api.find_error_code(result))
 
     def set_offset(self, offset: int):
         self.update_qs({
@@ -111,3 +140,16 @@ class DownloadApi(m115.M115ApiSpec):
             }
         else:
             return None
+
+
+class VideoApi(api.ApiSpec):
+
+    def __init__(self, pickcode: str) -> None:
+        super().__init__('https://webapi.115.com/files/video', False)
+        self.update_qs({'pickcode': pickcode})
+    
+    def parse_result(self, result: dict) -> str:
+        err_code = api.find_error_code(result)
+        if err_code != 0:
+            raise api.ApiException(code=err_code)
+        return result.get('video_url')

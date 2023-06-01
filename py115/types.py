@@ -9,9 +9,16 @@ from py115._internal import oss, utils
 class LoginPlatform(StrEnum):
 
     Web = "web"
+    """Web."""
+
     Mac = "mac"
+    """MAC App."""
+
     Linux = "linux"
+    """Linux App."""
+
     Windows = "windows"
+    """Windows App."""
 
 
 class _Base:
@@ -110,7 +117,10 @@ class File(_Base):
         r = cls()
         r.is_dir = file_id is None
         r.name = raw.get('n')
-        r.modified_time = utils.parse_datetime_str(raw.get('t'))
+        if 'te' in raw:
+            r.modified_time = utils.parse_datetime_str(raw.get('te'))
+        else:
+            r.modified_time = utils.parse_datetime_str(raw.get('t'))
         if r.is_dir:
             r.file_id = category_id
             r.parent_id = parent_id
@@ -150,14 +160,14 @@ class DownloadTicket(_Base):
     headers: dict
     """Required headers that should be used with download URL."""
 
-    @classmethod
-    def _create(cls, raw: dict, header: dict):
-        r = cls()
-        r.file_name = raw.get('file_name')
-        r.file_size = raw.get('file_size')
-        r.url = raw.get('url')
-        r.headers = header.copy()
-        return r
+
+class PlayTicket(_Base):
+
+    url: str
+    """Download URL."""
+
+    headers: dict
+    """Required headers that should be used with download URL."""
 
 
 class UploadTicket(_Base):
