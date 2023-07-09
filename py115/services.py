@@ -7,13 +7,13 @@ import typing
 from py115._internal.api import offline, file, dir, space, upload
 from py115._internal.protocol.client import Client
 
-from py115.types import TaskStatus, Task, File, DownloadTicket, UploadTicket
+from py115 import types
 
 
 _CLEAR_FLAG_MAPPING = {
-    TaskStatus.Complete: 1,
-    TaskStatus.Failed: 2,
-    TaskStatus.Running: 3
+    types.TaskStatus.Complete: 1,
+    types.TaskStatus.Failed: 2,
+    types.TaskStatus.Running: 3
 }
 
 
@@ -32,7 +32,7 @@ class OfflineService:
         s._user_id = user_id
         return s
 
-    def list(self) -> typing.Generator[Task, None, None]:
+    def list(self) -> typing.Generator[types.Task, None, None]:
         """Get all tasks.
 
         Yields:
@@ -42,14 +42,14 @@ class OfflineService:
         while True:
             result = self._client.execute_api(spec)
             for t in result['tasks']:
-                yield Task._create(t)
+                yield types.Task._create(t)
             page, page_count = result['page'], result['page_count']
             if page < page_count:
                 spec.set_page(page + 1)
             else:
                 break
 
-    def add_url(self, *urls: str) -> typing.Iterable[Task]:
+    def add_url(self, *urls: str) -> typing.Iterable[types.Task]:
         """Create task(s) from download URL.
 
         Args:
@@ -63,7 +63,7 @@ class OfflineService:
         add_results = self._client.execute_api(offline.AddUrlsApi(
             self._app_ver, self._user_id, urls
         ))
-        return [Task._create(r) for r in add_results]
+        return [types.Task._create(r) for r in add_results]
 
     def delete(self, *task_ids: str):
         """Delete task(s).
@@ -75,7 +75,7 @@ class OfflineService:
             return
         self._client.execute_api(offline.DeleteApi(task_ids))
 
-    def clear(self, status: TaskStatus = TaskStatus.Complete):
+    def clear(self, status: types.TaskStatus = types.TaskStatus.Complete):
         """Clear tasks.
 
         Args:
@@ -121,7 +121,7 @@ class StorageService:
         else:
             return (0, 0)
 
-    def list(self, dir_id: str = '0') -> typing.Generator[File, None, None]:
+    def list(self, dir_id: str = '0') -> typing.Generator[types.File, None, None]:
         """Get files under a directory.
 
         Args:
@@ -134,7 +134,28 @@ class StorageService:
         while True:
             result = self._client.execute_api(spec)
             for f in result['files']:
-                yield File._create(f)
+                yield types.File._create(f)
+            next_offset = result['offset'] + len(result['files'])
+            if next_offset >= result['count']:
+                break
+            else:
+                spec.set_offset(next_offset)
+
+    def search(self, keyword: str, dir_id: str = '0'):
+        """Recursively search files under a directory.
+
+        Args:
+            keyword (str): Keyword to search files.
+            dir_id (str): Directory ID to search.
+
+        Yields:
+            py115.types.File: File object whose name contains the keyword.
+        """
+        spec = file.SearchApi(keyword=keyword, dir_id=dir_id)
+        while True:
+            result = self._client.execute_api(spec)
+            for f in result['files']:
+                yield types.File._create(f)
             next_offset = result['offset'] + len(result['files'])
             if next_offset >= result['count']:
                 break
@@ -171,7 +192,7 @@ class StorageService:
             return
         self._client.execute_api(file.DeleteApi(file_ids))
 
-    def make_dir(self, parent_id: str, name: str) -> File:
+    def make_dir(self, parent_id: str, name: str) -> types.File:
         """Make new directory under a directory.
         
         Args:
@@ -183,9 +204,9 @@ class StorageService:
         """
         result = self._client.execute_api(dir.AddApi(parent_id, name))
         result['pid'] = parent_id
-        return File._create(result)
+        return types.File._create(result)
 
-    def request_download(self, pickcode: str) -> DownloadTicket:
+    def request_download(self, pickcode: str) -> types.DownloadTicket:
         """Download file from cloud storage.
 
         Args:
@@ -198,17 +219,43 @@ class StorageService:
         result = self._client.execute_api(file.DownloadApi(pickcode))
         if result is None or 'url' not in result:
             return None
+        ticket = types.DownloadTicket()
+        ticket.url = result['url']
+        ticket.file_name = result.get('file_name')
+        ticket.file_size = result.get('file_size')
         # Required headers for downloading
         cookies = self._client.export_cookies(url=result['url'])
-        headers = {
+        ticket.headers = {
             'User-Agent': self._client.user_agent,
             'Cookie': '; '.join([
                 f'{k}={v}' for k, v in cookies.items()
             ])
         }
-        return DownloadTicket._create(result, headers)
+        return ticket
 
-    def request_upload(self, dir_id: str, file_path: str) -> UploadTicket:
+    def request_play(self, pickcode: str) -> types.PlayTicket:
+        """Play a video file on cloud, returns required parameters as a ticket.
+
+        Args:
+            pickcode (str): Pick code of file.
+        
+        Returns:
+            py115.types.PlayTicket: A ticket contains all required fields to 
+            play the media file on cloud.
+        """
+        ticket = types.PlayTicket()
+        ticket.url = self._client.execute_api(file.VideoApi(pickcode=pickcode))
+        # Prepare headers for playing
+        cookies = self._client.export_cookies(url=ticket.url)
+        ticket.headers = {
+            'User-Agent': self._client.user_agent,
+            'Cookie': '; '.join([
+                f'{k}={v}' for k, v in cookies.items()
+            ])
+        }
+        return ticket
+
+    def request_upload(self, dir_id: str, file_path: str) -> types.UploadTicket:
         """Upload local file to cloud storage.
 
         Args:
@@ -230,7 +277,7 @@ class StorageService:
             dir_id: str, 
             save_name: str, 
             data_io: typing.BinaryIO, 
-        ) -> UploadTicket:
+        ) -> types.UploadTicket:
         """Upload data as a file to cloud storage.
 
         Args:
@@ -253,4 +300,4 @@ class StorageService:
         token_result = None
         if not init_result['done']:
             token_result = self._client.execute_api(upload.TokenApi())
-        return UploadTicket._create(init_result, token_result)
+        return types.UploadTicket._create(init_result, token_result)

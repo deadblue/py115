@@ -40,7 +40,7 @@ class Cipher():
 
     def _decrypt_slice(self, segment: bytes) -> bytes:
         msg = int.from_bytes(segment, 'big')
-        ret = pow(msg, self._e, self._n).to_bytes(self._key_len)
+        ret = pow(msg, self._e, self._n).to_bytes(self._key_len, 'big')
         for i, b in enumerate(ret):
             if i != 0 and b == 0:
                 ret = ret[i+1:]

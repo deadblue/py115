@@ -121,3 +121,7 @@ class Client:
             result = resp.json()
         _logger.debug('API result: %r', result)
         return spec.parse_result(result)
+
+    def fetch(self, url: str) -> bytes:
+        resp = self._session.get(url)
+        return resp.content

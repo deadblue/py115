@@ -9,10 +9,15 @@ Install
 
 .. code:: shell
 
+    # Install from PyPI
+    pip install py115
+
+    # Or install from source
     pip install git+https://github.com/deadblue/py115.git
 
-Example
-=======
+
+Usage
+=====
 
 .. code:: python
 
@@ -43,3 +48,15 @@ Example
         'ed2k://|file|ED2k-file|115115115|1234567890abcdef1234567890abcdef|/',
         'https://dl.some-server.com/some/file.ext'
     )
+
+
+Document
+========
+
+https://py115.readthedocs.io/en/stable/
+
+
+License
+=======
+
+MIT
