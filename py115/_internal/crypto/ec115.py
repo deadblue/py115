@@ -40,7 +40,7 @@ class Cipher:
             format='SEC1', compress=True
         )
         # ECDH key exchange
-        shared_secret = (server_key.pointQ * client_key.d).x.to_bytes(28)
+        shared_secret = (server_key.pointQ * client_key.d).x.to_bytes(28, 'big')
         self._aes_key = shared_secret[:16]
         self._aes_iv = shared_secret[-16:]
     
