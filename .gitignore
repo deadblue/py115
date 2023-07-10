@@ -1,6 +1,5 @@
 .vscode
-
-venv
+.venv
 __pycache__
 
 test.py

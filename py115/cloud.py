@@ -9,6 +9,11 @@ from py115 import login, services
 from py115.types import Credential, LoginPlatform
 
 
+_platform_names = [
+    'web', 'mac', 'linux', 'windows'
+]
+
+
 class Cloud(login._Handler):
     """115 cloud service.
 
@@ -70,11 +75,12 @@ class Cloud(login._Handler):
         Returns:
             py115.login.QrcodeSession: QRcode login session.
         """
-        token = self._client.execute_api(qrcode.TokenApi(platform.value))
+        platform_name = _platform_names[platform.value]
+        token = self._client.execute_api(qrcode.TokenApi(platform_name))
         return login.QrcodeSession._create(
             client=self._client,
             handler=self,
-            platform=platform.value,
+            platform=platform_name,
             uid=token.get('uid'), 
             time=token.get('time'),
             sign=token.get('sign')

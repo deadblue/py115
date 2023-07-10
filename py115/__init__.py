@@ -18,7 +18,7 @@ for file in storage.list():
 
 """
 
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 
 import py115.cloud
 import py115.types

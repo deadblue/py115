@@ -16,11 +16,6 @@ _client_id_mapping = {
 _image_url_template = 'https://qrcodeapi.115.com/api/1.0/%(platform)s/1.0/qrcode?qrfrom=1&client=%(client_id)d&uid=%(uid)s'
 
 
-Platform = typing.Literal[
-    'web', 'mac', 'linux', 'windows'
-]
-
-
 class _BaseApi(api.ApiSpec):
 
     def parse_result(self, result: dict) -> typing.Any:
@@ -31,7 +26,7 @@ class _BaseApi(api.ApiSpec):
 
 class TokenApi(_BaseApi):
 
-    def __init__(self, platform: Platform = 'web') -> None:
+    def __init__(self, platform: str) -> None:
         super().__init__(
             f'https://qrcodeapi.115.com/api/1.0/{platform}/1.0/token', True
         )
@@ -60,7 +55,7 @@ class StatusApi(_BaseApi):
 
 class LoginApi(_BaseApi):
 
-    def __init__(self, platform: Platform, uid: str) -> None:
+    def __init__(self, platform: str, uid: str) -> None:
         super().__init__(
             f'https://passportapi.115.com/app/1.0/{platform}/1.0/login/qrcode', True
         )
@@ -70,10 +65,10 @@ class LoginApi(_BaseApi):
         })
 
 
-def get_image_url(platform: Platform, uid: str) -> str:
+def get_image_url(platform: str, uid: str) -> str:
     params = {
         'platform': platform,
-        'client_id': _client_id_mapping.get(platform),
+        'client_id': _client_id_mapping.get(platform, 0),
         'uid': uid
     }
     return _image_url_template % params
