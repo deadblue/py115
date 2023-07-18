@@ -10,7 +10,7 @@ QRcode Login
     from PIL import Image
 
     import py115
-    from py115.types import LoginPlatform
+    from py115.types import AppType
 
 
     class QRcode:
@@ -89,7 +89,7 @@ QRcode Login
         cloud = py115.connect()
         
         print('Start QRcode login ...')
-        session = cloud.qrcode_login(LoginPlatform.Linux)
+        session = cloud.qrcode_login(AppType.Linux)
         qr = QRcode(io.BytesIO(session.image_data))
         
         print(f'Please scan QRcode: \n{qr.to_ascii()}')
