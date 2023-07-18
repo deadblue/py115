@@ -6,7 +6,9 @@ from enum import IntEnum
 from py115._internal import oss, utils
 
 
-class LoginPlatform(IntEnum):
+class AppType(IntEnum):
+    """App to login."""
+
     Web = 0
     """Login as web"""
     Mac = 1

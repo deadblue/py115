@@ -20,7 +20,7 @@ class QrcodeSession:
 
     _client: Client
     _handler: _Handler
-    _platform: str
+    _app_name: str
     _uid: str
     _time: int
     _sign: str
@@ -29,15 +29,15 @@ class QrcodeSession:
     """QRcode image data"""
 
     @classmethod
-    def _create(cls, client: Client, handler: _Handler, platform: str, uid: str, time: int, sign: str):
+    def _create(cls, client: Client, handler: _Handler, app_name: str, uid: str, time: int, sign: str):
         s = cls()
         s._client = client
         s._handler = handler
-        s._platform = platform
+        s._app_name = app_name
         s._uid = uid
         s._time = time
         s._sign = sign
-        s.image_data = client.fetch(qrcode.get_image_url(platform, uid))
+        s.image_data = client.fetch(qrcode.get_image_url(app_name, uid))
         return s
 
     def poll(self) -> bool:
@@ -57,7 +57,7 @@ class QrcodeSession:
             if status == 2:
                 # Allowed, start login
                 self._client.execute_api(qrcode.LoginApi(
-                    platform=self._platform,
+                    app_name=self._app_name,
                     uid=self._uid
                 ))
                 return self._handler._on_login()

@@ -6,10 +6,10 @@ from py115._internal.protocol.client import Client
 from py115._internal.api import qrcode, upload, version
 
 from py115 import login, services
-from py115.types import Credential, LoginPlatform
+from py115.types import AppType, Credential
 
 
-_platform_names = [
+_app_names = [
     'web', 'mac', 'linux', 'windows'
 ]
 
@@ -66,21 +66,21 @@ class Cloud(login._Handler):
             self._client.export_cookies()
         )
 
-    def qrcode_login(self, platform: LoginPlatform) -> login.QrcodeSession:
+    def qrcode_login(self, app_type: AppType) -> login.QrcodeSession:
         """Start QRcode login session.
 
         Args:
-            platform (py115.types.LoginPlatform): Platform to login.
+            app_type (py115.types.AppType): App to login.
 
         Returns:
             py115.login.QrcodeSession: QRcode login session.
         """
-        platform_name = _platform_names[platform.value]
-        token = self._client.execute_api(qrcode.TokenApi(platform_name))
+        app_name = _app_names[app_type.value]
+        token = self._client.execute_api(qrcode.TokenApi(app_name))
         return login.QrcodeSession._create(
             client=self._client,
             handler=self,
-            platform=platform_name,
+            app_name=app_name,
             uid=token.get('uid'), 
             time=token.get('time'),
             sign=token.get('sign')
