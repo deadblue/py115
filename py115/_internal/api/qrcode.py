@@ -6,19 +6,12 @@ import typing
 from py115._internal.protocol import api
 
 
-_client_id_mapping = {
+_app_id_mapping = {
     'web': 0,
     'mac': 7,
     'linux': 7,
     'windows': 7,
 }
-
-_image_url_template = 'https://qrcodeapi.115.com/api/1.0/%(platform)s/1.0/qrcode?qrfrom=1&client=%(client_id)d&uid=%(uid)s'
-
-
-Platform = typing.Literal[
-    'web', 'mac', 'linux', 'windows'
-]
 
 
 class _BaseApi(api.ApiSpec):
@@ -31,9 +24,9 @@ class _BaseApi(api.ApiSpec):
 
 class TokenApi(_BaseApi):
 
-    def __init__(self, platform: Platform = 'web') -> None:
+    def __init__(self, app_name: str) -> None:
         super().__init__(
-            f'https://qrcodeapi.115.com/api/1.0/{platform}/1.0/token', True
+            f'https://qrcodeapi.115.com/api/1.0/{app_name}/1.0/token', True
         )
 
 
@@ -60,20 +53,16 @@ class StatusApi(_BaseApi):
 
 class LoginApi(_BaseApi):
 
-    def __init__(self, platform: Platform, uid: str) -> None:
+    def __init__(self, app_name: str, uid: str) -> None:
         super().__init__(
-            f'https://passportapi.115.com/app/1.0/{platform}/1.0/login/qrcode', True
+            f'https://passportapi.115.com/app/1.0/{app_name}/1.0/login/qrcode', True
         )
         self.update_from({
             'account': uid,
-            'app': platform
+            'app': app_name
         })
 
 
-def get_image_url(platform: Platform, uid: str) -> str:
-    params = {
-        'platform': platform,
-        'client_id': _client_id_mapping.get(platform),
-        'uid': uid
-    }
-    return _image_url_template % params
+def get_image_url(app_name: str, uid: str) -> str:
+    app_id = _app_id_mapping.get(app_name, 0)
+    return f'https://qrcodeapi.115.com/api/1.0/{app_name}/1.0/qrcode?qrfrom=1&client={app_id}d&uid={uid}'

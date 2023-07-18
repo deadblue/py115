@@ -1,24 +1,22 @@
 __author__ = 'deadblue'
 
 from datetime import datetime
-from enum import IntEnum, StrEnum
+from enum import IntEnum
 
 from py115._internal import oss, utils
 
 
-class LoginPlatform(StrEnum):
+class AppType(IntEnum):
+    """App to login."""
 
-    Web = "web"
-    """Web."""
-
-    Mac = "mac"
-    """MAC App."""
-
-    Linux = "linux"
-    """Linux App."""
-
-    Windows = "windows"
-    """Windows App."""
+    Web = 0
+    """Login as web"""
+    Mac = 1
+    """Login as MAC app"""
+    Linux = 2
+    """Login as Linux app"""
+    Windows = 3
+    """Login as Windows app"""
 
 
 class _Base:
