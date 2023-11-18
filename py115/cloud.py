@@ -44,16 +44,19 @@ class Cloud:
         if credential is not None:
             self.import_credential(credential)
 
-    def import_credential(self, credential: Credential) -> bool:
+    def import_credential(self, credential: Any) -> bool:
         """Import credential to cloud instance.
 
         Args:
-            credential (py115.types.Credential): Credential object to identity user.
+            credential (Any): Credential object to identity user.
 
         Return:
             bool: Is credential valid.
         """
-        self._client.import_cookies(credential.to_dict())
+        cookies = _extract_cookies(credential)
+        if cookies is None:
+            return False
+        self._client.import_cookies(cookies)
         return self._check_login()
 
     def export_credentail(self) -> Union[Credential, None]:
@@ -150,3 +153,22 @@ class Cloud:
             app_type=self._app_type,
             uh=self._upload_helper
         )
+
+def _extract_cookies(credential: Any) -> Union[Dict[str, str], None]:
+    if isinstance(credential, Credential):
+        return credential.to_dict()
+    # Handle dict or object
+    raw: Dict[str, Any] = None
+    if isinstance(credential, dict):
+        raw = credential
+    elif hasattr(credential, '__dict__'):
+        raw = credential.__dict__
+    if raw is None:
+        return None
+    # Extract cookies from credentials
+    cookies = {}
+    for key, value in raw.items():
+        key = key.upper()
+        if key in ('UID', 'CID', 'SEID'):
+            cookies[key] = str(value)
+    return cookies
