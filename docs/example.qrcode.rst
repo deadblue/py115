@@ -10,7 +10,7 @@ QRcode Login
     from PIL import Image
 
     import py115
-    from py115.types import AppType
+    from py115.types import LoginTarget, QrcodeStatus
 
 
     class QRcode:
@@ -89,11 +89,13 @@ QRcode Login
         cloud = py115.connect()
         
         print('Start QRcode login ...')
-        session = cloud.qrcode_login(AppType.Linux)
+        session = cloud.qrcode_login(LoginTarget.Linux)
         qr = QRcode(io.BytesIO(session.image_data))
-        
         print(f'Please scan QRcode: \n{qr.to_ascii()}')
-        if session.poll():
-            print('Login succeeded!')
-        else:
-            print('Login failed!')
+        while True:
+            status = cloud.qrcode_poll(session)
+            if status == QrcodeStatus.Done:
+                print('Login succeeded!')
+            elif status == QrcodeStatus.Expired or status == QrcodeStatus.Failed:
+                print('Login failed!')
+                break

@@ -21,14 +21,6 @@ py115.cloud module
    :undoc-members:
    :show-inheritance:
 
-py115.login module
----------------------
-
-.. automodule:: py115.login
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 py115.services module
 ---------------------
 
