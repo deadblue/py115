@@ -4,7 +4,7 @@ import os
 import os.path
 import typing
 
-from py115._internal.api import offline, file, dir, space, upload
+from py115._internal.api import offline, file, dir, space, upload, video
 from py115._internal.protocol.client import Client
 
 from py115 import types
@@ -93,16 +93,17 @@ class OfflineService:
 
 
 class StorageService:
-    """Cloud file/directory manager.
-    """
+    """Cloud file/directory manager."""
 
-    _client: Client = None
-    _upload_helper: upload.Helper = None
+    _client: Client
+    _app_type: str
+    _upload_helper: upload.Helper
 
     @classmethod
-    def _create(cls, client: Client, uh: upload.Helper):
+    def _create(cls, client: Client, app_type: str, uh: upload.Helper):
         s = cls()
         s._client = client
+        s._app_type = app_type
         s._upload_helper = uh
         return s
 
@@ -130,7 +131,7 @@ class StorageService:
         Yields:
             py115.types.File: File object under the directory.
         """
-        spec = file.ListApi(dir_id)
+        spec = file.ListApi(dir_id, 0)
         while True:
             result = self._client.execute_api(spec)
             for f in result['files']:
@@ -180,7 +181,20 @@ class StorageService:
             file_id (str): ID of file to be renamed.
             new_name (str): New name for the file.
         """
-        self._client.execute_api(file.RenameApi(file_id, new_name))
+        spec = file.RenameApi()
+        spec.add_file(file_id, new_name)
+        self._client.execute_api(spec)
+
+    def batch_rename(self, *pairs: typing.Tuple[str, str]):
+        """Batch rename files
+
+        Args:
+            *pair (Tuple[str, str]): Pair of file_id and new_name.
+        """
+        spec = file.RenameApi()
+        for file_id, new_name in pairs:
+            spec.add_file(file_id, new_name)
+        self._client.execute_api(spec)
 
     def delete(self, *file_ids: str):
         """Delete files.
@@ -225,28 +239,6 @@ class StorageService:
         ticket.file_size = result.get('file_size')
         # Required headers for downloading
         cookies = self._client.export_cookies(url=result['url'])
-        ticket.headers = {
-            'User-Agent': self._client.user_agent,
-            'Cookie': '; '.join([
-                f'{k}={v}' for k, v in cookies.items()
-            ])
-        }
-        return ticket
-
-    def request_play(self, pickcode: str) -> types.PlayTicket:
-        """Play a video file on cloud, returns required parameters as a ticket.
-
-        Args:
-            pickcode (str): Pick code of file.
-        
-        Returns:
-            py115.types.PlayTicket: A ticket contains all required fields to 
-            play the media file on cloud.
-        """
-        ticket = types.PlayTicket()
-        ticket.url = self._client.execute_api(file.VideoApi(pickcode=pickcode))
-        # Prepare headers for playing
-        cookies = self._client.export_cookies(url=ticket.url)
         ticket.headers = {
             'User-Agent': self._client.user_agent,
             'Cookie': '; '.join([
@@ -301,3 +293,33 @@ class StorageService:
         if not init_result['done']:
             token_result = self._client.execute_api(upload.TokenApi())
         return types.UploadTicket._create(init_result, token_result)
+
+    def request_play(self, pickcode: str) -> types.PlayTicket:
+        """Play a video file on cloud, returns required parameters as a ticket.
+
+        Args:
+            pickcode (str): Pick code of file.
+        
+        Returns:
+            py115.types.PlayTicket: A ticket contains all required fields to 
+            play the media file on cloud.
+        """
+        ticket = types.PlayTicket()
+        if self._app_type == 'web':
+            spec = video.WebPlayApi(pickcode=pickcode)
+        else:
+            spec = video.PcPlayApi(
+                pickcode=pickcode,
+                user_id=self._upload_helper.user_id,
+                app_ver=self._upload_helper.app_version
+            )
+        ticket.url = self._client.execute_api(spec)
+        # Prepare headers for playing
+        cookies = self._client.export_cookies(url=ticket.url)
+        ticket.headers = {
+            'User-Agent': self._client.user_agent,
+            'Cookie': '; '.join([
+                f'{k}={v}' for k, v in cookies.items()
+            ])
+        }
+        return ticket
