@@ -2,11 +2,12 @@ __author__ = 'deadblue'
 
 from datetime import datetime
 from enum import IntEnum
+from typing import Self
 
 from py115._internal import oss, utils
 
 
-class AppType(IntEnum):
+class LoginTarget(IntEnum):
     """App to login."""
 
     Web = 0
@@ -17,6 +18,36 @@ class AppType(IntEnum):
     """Login as Linux app"""
     Windows = 3
     """Login as Windows app"""
+
+
+class QrcodeSession:
+    """QRcode login session."""
+
+    _app_name: str
+    _uid: str
+    _time: int
+    _sign: str
+
+    image_data: bytes
+    """QRcode image data"""
+
+    @classmethod
+    def _create(cls, app_name: str, uid: str, time: int, sign: str, image: bytes) -> Self:
+        ret = cls()
+        ret._app_name = app_name
+        ret._uid = uid
+        ret._time = time
+        ret._sign = sign
+        ret.image_data = image
+        return ret
+
+
+class QrcodeStatus(IntEnum):
+
+    Waiting = 0
+    Done = 1
+    Expired = -1
+    Failed = -2
 
 
 class _Base:

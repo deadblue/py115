@@ -21,6 +21,8 @@ class M115ApiSpec(api.ApiSpec):
         }).encode()
 
     def parse_result(self, result: dict):
-        data = super().parse_result(result)
         # M115 decode
-        return json.loads(m115.decode(self._m_key, data))
+        data = m115.decode(
+            self._m_key,  super().parse_result(result)
+        )
+        return json.loads(data)
