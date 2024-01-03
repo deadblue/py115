@@ -131,7 +131,7 @@ class StorageService:
         Yields:
             py115.types.File: File object under the directory.
         """
-        spec = file.ListApi(dir_id, 0)
+        spec = file.ListApi(dir_id)
         while True:
             result = self._client.execute_api(spec)
             for f in result['files']:
