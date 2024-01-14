@@ -117,8 +117,10 @@ class File(_Base):
         r.name = raw.get('n')
         if 'te' in raw:
             r.modified_time = utils.parse_datetime_str(raw.get('te'))
-        else:
+        elif 't' in raw:
             r.modified_time = utils.parse_datetime_str(raw.get('t'))
+        else:
+            r.modified_time = datetime.now()
         if r.is_dir:
             r.file_id = category_id
             r.parent_id = parent_id
