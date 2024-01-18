@@ -107,8 +107,10 @@ class MoveApi(api.ApiSpec):
 
 class RenameApi(api.ApiSpec):
 
-    def __init__(self, file_id: str, new_name: str) -> None:
+    def __init__(self) -> None:
         super().__init__('https://webapi.115.com/files/batch_rename')
+
+    def add_file(self, file_id: str, new_name: str):
         key = 'files_new_name[%s]' % file_id
         self.update_from({
             key: new_name
@@ -140,16 +142,3 @@ class DownloadApi(m115.M115ApiSpec):
             }
         else:
             return None
-
-
-class VideoApi(api.ApiSpec):
-
-    def __init__(self, pickcode: str) -> None:
-        super().__init__('https://webapi.115.com/files/video', False)
-        self.update_qs({'pickcode': pickcode})
-    
-    def parse_result(self, result: dict) -> str:
-        err_code = api.find_error_code(result)
-        if err_code != 0:
-            raise api.ApiException(code=err_code)
-        return result.get('video_url')

@@ -18,15 +18,16 @@ for file in storage.list():
 
 """
 
-VERSION = '0.0.3'
+VERSION = '0.0.4'
 
-import py115.cloud
-import py115.types
+from typing import Any
+
+from py115.cloud import Cloud
 
 def connect(
-        credential: py115.types.Credential = None,
+        credential: Any = None,
         protocol_kwargs: dict=  None
-) -> py115.cloud.Cloud:
+) -> Cloud:
     """Connect to 115 cloud.
 
     Args:
@@ -38,7 +39,7 @@ def connect(
     Return:
         py115.cloud.Cloud: Cloud instance.
     """
-    return py115.cloud.Cloud(
+    return Cloud(
         credential=credential, 
         protocol_kwargs=protocol_kwargs
     )
