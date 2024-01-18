@@ -25,11 +25,15 @@ Usage
     from py115.types import Credentail
 
     # Connect to cloud
-    cloud = py115.connect(
-        credential=Credential(
-            uid='', cid='', seid=''
-        )
-    )
+    cloud = py115.connect(credential=Credential(
+        uid='', cid='', seid=''
+    ))
+    # OR
+    # cloud = py115.connect(credential={
+    #    'UID': '',
+    #    'CID': '',
+    #    'SEID': '',
+    #})
 
     # Get storage service
     storage = cloud.storage()
