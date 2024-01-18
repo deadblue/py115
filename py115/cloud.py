@@ -18,7 +18,7 @@ class Cloud:
     """115 cloud service.
 
     Args:
-        credential (py115.types.Credential): Credential object.
+        credential (Any): Credential object.
         protocol_kwargs (dict): Settings for underlying protocol client.
     """
 
