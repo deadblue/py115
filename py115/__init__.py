@@ -31,7 +31,7 @@ def connect(
     """Connect to 115 cloud.
 
     Args:
-        credential (py115.types.Credential): 
+        credential (Any): 
             Credential data to identity user.
         protocol_kwargs (dict): 
             Keyword arguments for underlying protocol client.
