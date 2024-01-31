@@ -2,7 +2,7 @@ __author__ = 'deadblue'
 
 from datetime import datetime
 from enum import IntEnum
-from typing import Self
+from typing import Self, Optional
 
 from py115._internal import oss, utils
 
@@ -18,6 +18,21 @@ class LoginTarget(IntEnum):
     """Login as Linux app"""
     Windows = 3
     """Login as Windows app"""
+
+
+class QrcodeStatus(IntEnum):
+
+    Waiting = 0
+    """QRCode is waiting for scanning."""
+
+    Done = 1
+    """QRCode is scanned and approved by user."""
+
+    Expired = -1
+    """QRCode is expired."""
+
+    Failed = -2
+    """QRcode is declined by user."""
 
 
 class QrcodeSession:
@@ -40,14 +55,6 @@ class QrcodeSession:
         ret._sign = sign
         ret.image_data = image
         return ret
-
-
-class QrcodeStatus(IntEnum):
-
-    Waiting = 0
-    Done = 1
-    Expired = -1
-    Failed = -2
 
 
 class _Base:
@@ -111,7 +118,7 @@ class Credential(_Base):
 
 
 class File(_Base):
-    """File represents a cloud file or directory."""
+    """File represents a file or directory on cloud storage."""
 
     file_id: str
     """Unique ID of the file on cloud."""
@@ -122,45 +129,50 @@ class File(_Base):
     name: str
     """Base name."""
 
-    size: int
-    """Size in bytes."""
-
     modified_time: datetime
     """Last modified datetime."""
-
-    sha1: str
-    """SHA-1 hash of the file in HEX encoding."""
-
-    pickcode: str
-    """Pickcode to download the file."""
 
     is_dir: bool
     """Is file a directory."""
 
+    size: int = 0
+    """Size in bytes."""
+
+    sha1: Optional[str] = None
+    """SHA-1 hash of the file in HEX encoding."""
+
+    pickcode: Optional[str] = None
+    """Pickcode to download the file."""
+
+    media_duration: Optional[int] = None
+    """Media duration in seconds for audio/video file."""
+
+
     @classmethod
-    def _create(cls, raw: dict):
+    def _create(cls, raw: dict) -> Self:
         category_id = raw.get('cid')
-        file_id = raw.get('fid')
-        parent_id = raw.get('pid')
+        file_id = raw.get('fid', None)
+        parent_id = raw.get('pid', None)
 
         r = cls()
-        r.is_dir = file_id is None
         r.name = raw.get('n')
+        r.size = raw.get('s', 0)
+        r.sha1 = raw.get('sha', None)
+        r.media_duration = raw.get('play_long', None)
         if 'te' in raw:
             r.modified_time = utils.parse_datetime_str(raw.get('te'))
         elif 't' in raw:
             r.modified_time = utils.parse_datetime_str(raw.get('t'))
         else:
             r.modified_time = datetime.now()
+        r.is_dir = file_id is None
         if r.is_dir:
             r.file_id = category_id
             r.parent_id = parent_id
-            r.size, r.sha1, r.pickcode = 0, None, None
+            r.pickcode = None
         else:
             r.file_id = file_id
             r.parent_id = category_id
-            r.size = raw.get('s')
-            r.sha1 = raw.get('sha')
             r.pickcode = raw.get('pc')
         return r
 
@@ -191,6 +203,12 @@ class DownloadTicket(_Base):
     headers: dict
     """Required headers that should be used with download URL."""
 
+    def __init__(self, url: str, file_name: str, file_size: int) -> None:
+        self.url = url
+        self.file_name = file_name
+        self.file_size = file_size
+        self.headers = {}
+
 
 class PlayTicket(_Base):
 
@@ -199,6 +217,10 @@ class PlayTicket(_Base):
 
     headers: dict
     """Required headers that should be used with download URL."""
+
+    def __init__(self, url: str) -> None:
+        self.url = url
+        self.headers = {}
 
 
 class UploadTicket(_Base):
@@ -231,7 +253,7 @@ class UploadTicket(_Base):
     """Expiration time of this ticket."""
 
     @classmethod
-    def _create(cls, raw: dict, token: dict):
+    def _create(cls, raw: dict, token: dict) -> Self:
         r = cls()
         r.is_done = raw['done']
         if not r.is_done:

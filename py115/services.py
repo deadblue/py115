@@ -233,18 +233,19 @@ class StorageService:
         result = self._client.execute_api(file.DownloadApi(pickcode))
         if result is None or 'url' not in result:
             return None
-        ticket = types.DownloadTicket()
-        ticket.url = result['url']
-        ticket.file_name = result.get('file_name')
-        ticket.file_size = result.get('file_size')
+        ticket = types.DownloadTicket(
+            url=result.get('url'),
+            file_name=result.get('file_name'),
+            file_size=result.get('file_size')
+        )
         # Required headers for downloading
         cookies = self._client.export_cookies(url=result['url'])
-        ticket.headers = {
+        ticket.headers.update({
             'User-Agent': self._client.user_agent,
             'Cookie': '; '.join([
                 f'{k}={v}' for k, v in cookies.items()
             ])
-        }
+        })
         return ticket
 
     def request_upload(self, dir_id: str, file_path: str) -> types.UploadTicket:
@@ -304,7 +305,6 @@ class StorageService:
             py115.types.PlayTicket: A ticket contains all required fields to 
             play the media file on cloud.
         """
-        ticket = types.PlayTicket()
         if self._app_type == 'web':
             spec = video.WebPlayApi(pickcode=pickcode)
         else:
@@ -313,13 +313,17 @@ class StorageService:
                 user_id=self._upload_helper.user_id,
                 app_ver=self._upload_helper.app_version
             )
-        ticket.url = self._client.execute_api(spec)
-        # Prepare headers for playing
-        cookies = self._client.export_cookies(url=ticket.url)
-        ticket.headers = {
-            'User-Agent': self._client.user_agent,
-            'Cookie': '; '.join([
-                f'{k}={v}' for k, v in cookies.items()
-            ])
-        }
+        play_url = self._client.execute_api(spec)
+        ticket = types.PlayTicket(
+            url=play_url
+        )
+        if self._app_type == 'web':
+            # Prepare headers for playing
+            cookies = self._client.export_cookies(url=ticket.url)
+            ticket.headers.update({
+                'User-Agent': self._client.user_agent,
+                'Cookie': '; '.join([
+                    f'{k}={v}' for k, v in cookies.items()
+                ])
+            })
         return ticket
