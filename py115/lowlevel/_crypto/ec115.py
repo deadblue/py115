@@ -4,6 +4,7 @@ import binascii
 import logging
 import random
 import struct
+import time
 
 from Crypto.Cipher import AES
 from Crypto.PublicKey import ECC
@@ -44,7 +45,8 @@ class Cipher:
         self._aes_key = shared_secret[:16]
         self._aes_iv = shared_secret[-16:]
     
-    def encode_token(self, timestamp: int) -> str:
+    def encode_token(self) -> str:
+        timestamp = int(time.time())
         token = bytearray(struct.pack(
             '<15sBII15sBI',
             self._pub_key[:15], 0, 115, timestamp,

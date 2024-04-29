@@ -2,7 +2,7 @@ __author__ = 'deadblue'
 
 from typing import Any, Dict
 
-from ._json import JsonApiSpec
+from ._base import JsonApiSpec
 
 
 class AppVersionApi(JsonApiSpec[str]):

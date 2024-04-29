@@ -2,9 +2,8 @@ __author__ = 'deadblue'
 
 import time
 from dataclasses import dataclass
-from typing import Any, Dict
 
-from ._m115 import M115ApiSpec
+from ._base import M115ApiSpec, JsonResult
 
 
 @dataclass
@@ -22,7 +21,7 @@ class DownloadApi(M115ApiSpec[DownloadResult]):
         self.query['t'] = int(time.time())
         self.form['pickcode'] = pickcode
 
-    def _parse_m115_result(self, m115_obj: Dict[str, Any]) -> DownloadResult:
+    def _parse_m115_result(self, m115_obj: JsonResult) -> DownloadResult:
         if len(m115_obj) == 0:
             return None
         file_id, down_info = m115_obj.popitem()
