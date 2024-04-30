@@ -42,6 +42,7 @@ from.qrcode import (
     QrcodeTokenApi,
     QrcodeStatus,
     QrcodeStatusApi,
+    QrcodeLoginResult,
     QrcodeLoginApi,
     get_qrcode_image_url
 )
@@ -94,6 +95,7 @@ __all__ = [
     'QrcodeTokenApi',
     'QrcodeStatus',
     'QrcodeStatusApi',
+    'QrcodeLoginResult',
     'QrcodeLoginApi',
     'get_qrcode_image_url',
 

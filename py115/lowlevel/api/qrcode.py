@@ -3,6 +3,7 @@ __author__ = 'deadblue'
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from typing import Dict
 
 from ._base import JsonApiSpec, JsonResult, R
 
@@ -74,7 +75,14 @@ class QrcodeStatusApi(BaseQrcodeApi[QrcodeStatus]):
         return QrcodeStatus(status)
 
 
-class QrcodeLoginApi(BaseQrcodeApi[bool]):
+@dataclass
+class QrcodeLoginResult:
+    user_id: int
+    user_name: str
+    cookies: Dict[str, str]
+
+
+class QrcodeLoginApi(BaseQrcodeApi[QrcodeLoginResult]):
     
     def __init__(self, app_name: str, uid: str) -> None:
         super().__init__(
@@ -85,9 +93,13 @@ class QrcodeLoginApi(BaseQrcodeApi[bool]):
             'app': app_name
         })
 
-    def _parse_json_result(self, json_obj: JsonResult) -> bool:
-        print(json_obj)
-        return True
+    def _parse_json_result(self, json_obj: JsonResult) -> QrcodeLoginResult:
+        data_obj = json_obj['data']
+        return QrcodeLoginResult(
+            user_id=data_obj['user_id'],
+            user_name=data_obj['user_name'],
+            cookies=data_obj['cookie']
+        )
 
 
 _app_id_mapping = {
