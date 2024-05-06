@@ -2,10 +2,24 @@ __author__ = 'deadblue'
 
 from hashlib import md5
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, TypeVar, Union
+from typing import Dict, Generic, Optional, TypeVar, Union
+
+from attr import dataclass
 
 
 R = TypeVar('R')
+
+
+@dataclass
+class ApiTimeout:
+    """
+    Timeout config for API.
+    """
+
+    connect: float
+    """Connect timeout in seconds."""
+    read: float
+    """Read timeout in seconds."""
 
 
 class ApiSpec(Generic[R], ABC):
@@ -15,18 +29,26 @@ class ApiSpec(Generic[R], ABC):
 
     _api_url: str
     _use_ec: bool
+    _timeout: ApiTimeout = None
     query: Dict[str, str]
     form: Dict[str, str]
 
     def __init__(self, api_url: str, use_ec: bool) -> None:
         self._api_url = api_url
         self._use_ec = use_ec
+        self._timeout = ApiTimeout(
+            connect=5.0, read=5.0
+        )
         self.query = {}
         self.form = {}
 
     @property
     def use_ec(self) -> bool:
         return self._use_ec
+
+    @property
+    def timeout(self) -> ApiTimeout:
+        return self._timeout
 
     def url(self) -> str:
         return self._api_url

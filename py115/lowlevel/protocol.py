@@ -1,11 +1,15 @@
 __author__ = 'deadblue'
 
-from typing import Dict
+from typing import Awaitable, Dict
 
 import httpx
 
+from ._cookie import LowlevelCookieJar
 from ._crypto.ec115 import Cipher
 from .types import ApiSpec, R
+
+
+_COOKIE_DOMAIN = '.115.com'
 
 
 class RetryException(Exception):
@@ -22,26 +26,32 @@ class Client:
     Client is low-level API client which works with low-level ApiSpecs.
     """
 
-    _hc: httpx.Client
     _ecc: Cipher
+    _jar: LowlevelCookieJar
+    _hc: httpx.Client
 
     def __init__(self) -> None:
+        self._ecc = Cipher()
+        self._jar = LowlevelCookieJar()
         self._hc = httpx.Client(
             headers={
                 'User-Agent': 'Mozilla/5.0'
             },
-            timeout=httpx.Timeout(
-                timeout=5.0, read=60.0
-            )
+            cookies=self._jar
         )
-        self._ecc = Cipher()
 
     def set_user_agent(self, name: str):
         self._hc.headers['User-Agent'] = name
 
     def import_cookies(self, cookies: Dict[str, str]):
         for name, value in cookies.items():
-            self._hc.cookies.set(name, value, domain='.115.com')
+            self._hc.cookies.set(name, value, domain=_COOKIE_DOMAIN)
+
+    def export_cookies(self, target_url='https://115.com/') -> Dict[str, str]:
+        result = {}
+        for cookie in self._jar.get_cookies_for_url(target_url):
+            result[cookie.name] = cookie.value
+        return result
 
     def _build_request(self, spec: ApiSpec[R]) -> httpx.Request:
         payload = spec.payload()
@@ -55,12 +65,18 @@ class Client:
             spec.query['k_ec'] = self._ecc.encode_token()
             if payload is not None: 
                 payload = self._ecc.encode(payload)
+        timeout = httpx.Timeout(
+            timeout=None,
+            connect=spec.timeout.connect,
+            read=spec.timeout.read
+        )
         return self._hc.build_request(
             method=method,
             url=spec.url(),
             params=spec.query,
             headers=headers,
-            content=payload
+            content=payload,
+            timeout=timeout
         )
 
     def call_api(self, spec: ApiSpec[R]) -> R:

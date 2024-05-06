@@ -3,7 +3,7 @@ __author__ = 'deadblue'
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict
+from typing import Dict, Union
 
 from ._base import JsonApiSpec, JsonResult, R
 
@@ -57,6 +57,8 @@ class QrcodeStatusApi(BaseQrcodeApi[QrcodeStatus]):
             'sign': sign,
             '_': str(int(datetime.now().timestamp()))
         })
+        # Make read timeout greater than 30 seconds
+        self._timeout.read = 35.0
 
     def _get_error_code(self, json_obj: JsonResult) -> int:
         err_code = super()._get_error_code(json_obj)

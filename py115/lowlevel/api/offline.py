@@ -49,12 +49,15 @@ class OfflineListResult:
 
 class OfflineListApi(JsonApiSpec[OfflineListResult]):
 
+    _page: int
+
     def __init__(self, page_num: int = 1) -> None:
         super().__init__(
             'https://lixian.115.com/lixian/?ct=lixian&ac=task_lists'
         )
-        self.query['page'] = str(page_num)
-    
+        self._page = page_num
+        self.query['page'] = str(self._page)
+
     def _parse_json_result(self, json_obj: JsonResult) -> OfflineListResult:
         return OfflineListResult(
             page_num=json_obj['page'],
@@ -68,6 +71,10 @@ class OfflineListApi(JsonApiSpec[OfflineListResult]):
                 for task_obj in json_obj['tasks']
             ]
         )
+
+    def next_page(self):
+        self._page += 1
+        self.query['page'] = str(self._page)
 
 
 class OfflineDeleteApi(VoidApiSpec):
