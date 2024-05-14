@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Union
 
-from ..types import CommonParams
+from ..protocol import CommonParams
 from ._base import JsonApiSpec, JsonResult
 
 

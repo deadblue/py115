@@ -4,13 +4,14 @@ import time
 from dataclasses import dataclass
 from typing import List
 
-from ..types import CommonParams
+from ..protocol import CommonParams
 from ._base import JsonApiSpec, JsonResult, M115ApiSpec
 from ._util import to_int, to_https_url
 
 
 @dataclass
 class ImageLinkResult:
+
     file_name: str
     origin_url: str
 
@@ -35,6 +36,7 @@ class ImageLinkApi(JsonApiSpec[ImageLinkResult]):
 
 @dataclass
 class VideoObject:
+
     width: int
     height: int
     play_url: str
@@ -42,6 +44,7 @@ class VideoObject:
 
 @dataclass
 class VideoPlayResult:
+
     file_name: str
     duration: int
     items: List[VideoObject]

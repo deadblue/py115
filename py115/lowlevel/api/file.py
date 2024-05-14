@@ -1,52 +1,62 @@
 __author__ = 'deadblue'
 
 from dataclasses import dataclass
+from enum import IntEnum
 from typing import Dict, List, Optional, Sequence
 
-from ..protocol import RetryException
+from py115.compat import StrEnum
+from py115.lowlevel.protocol import RetryException
 from ._base import JsonApiSpec, JsonResult, VoidApiSpec
 from ._util import to_timestamp
 
 
-try:
-    from enum import StrEnum
-    
-    class DirOrder(StrEnum):
-        FILE_NAME = 'file_name'
-        FILE_SIZE = 'file_size'
-        FILE_TYPE = 'file_type'
-        CREATE_TIME = 'user_ptime'
-        UPDATE_TIME = 'user_utime'
-        OPEN_TIME = 'user_otime'
-        
-except:
-    from enum import Enum
-
-    class DirOrder(str, Enum):
-        FILE_NAME = 'file_name'
-        FILE_SIZE = 'file_size'
-        FILE_TYPE = 'file_type'
-        UPDATE_TIME = 'user_utime'
-        CREATE_TIME = 'user_ptime'
-        OPEN_TIME = 'user_otime'
-
-
 @dataclass(init=False)
 class FileObject:
+    """
+    FileObject represents a file/directory item in cloud storage.
+    """
+
     file_id: str
+    """Unique ID of the file/directory."""
+
     parent_id: str
+    """File ID of parent directory."""
+
     name: str
+    """Base name."""
+
     pickcode: str
+    """Pick code for download/play."""
+
     is_dir: bool
+    """Indicate whether file is a directory."""
+
     is_hidden: bool
+    """Indicate whether file is hidden."""
+
     size: int = 0
+    """File size in bytes."""
+
     sha1: Optional[str] = None
+    """File SHA-1 hash in HEX-format."""
+
     update_time: int
+    """Timestamp when file is updated."""
+
     create_time: Optional[int] = None
+    """Timestamp when file is created."""
+
     open_time: Optional[int] = None
+    """Timestamp when file is opened."""
+
     is_video: bool = False
+    """Indicate whether file is video."""
+
     media_duration: Optional[int] = None
+    """Media duration in seconds for audio/video file."""
+
     video_definition: Optional[int] = None
+    """Video definition for video file."""
 
     def __new__(cls, json_obj: JsonResult):
         ret = object.__new__(cls)
@@ -78,6 +88,7 @@ class FileObject:
 
 @dataclass
 class FileListResult:
+
     files: List[FileObject]
     order_mode: str
     order_asc: int
@@ -88,12 +99,8 @@ class FileListResult:
 
 class FileListApi(JsonApiSpec[FileListResult]):
 
-    _offset: int
-    _limit: int
-
     def __init__(self, dir_id: str, offset: int = 0, limit: int = 115) -> None:
         super().__init__('')
-        self._offset, self._limit = offset, limit
         self.query.update({
             'aid': '1',
             'cid': dir_id,
@@ -137,9 +144,72 @@ class FileListApi(JsonApiSpec[FileListResult]):
             ret.files.append(FileObject(file_obj))
         return ret
     
-    def page_down(self):
-        self._offset += self._limit
-        self.query['offset'] = str(self._offset)
+    def set_offset(self, value: int):
+        self.query['offset'] = str(value)
+
+
+
+class FileSearchApi(JsonApiSpec[FileListResult]):
+
+    def __init__(
+            self, 
+            keyword: str, 
+            dir_id: str = '0', 
+            offset: int = 0, 
+            limit: int = 115
+        ) -> None:
+        super().__init__('https://webapi.115.com/files/search')
+        self.query.update({
+            'aid': '1',
+            'cid': dir_id,
+            'search_value': keyword,
+            'offset': str(offset),
+            'limit': str(limit),
+            'format': 'json'
+        })
+    
+    def _parse_json_result(self, json_obj: JsonResult) -> FileListResult:
+        ret = FileListResult(
+            files=[],
+            order_mode=json_obj.get('order'),
+            order_asc=json_obj.get('is_ac'),
+            offset=json_obj.get('offset'),
+            limit=json_obj.get('page_size'),
+            count=json_obj.get('count')
+        )
+        for file_obj in json_obj['data']:
+            ret.files.append(FileObject(file_obj))
+        return ret
+
+    def set_offset(self, value: int):
+        self.query['offset'] = str(value)
+
+
+@dataclass
+class PathNode:
+
+    file_id: str
+    name: str
+
+
+@dataclass
+class FileGetResult:
+
+    name: str
+    pickcode: str
+    is_dir: bool
+    path: List[PathNode]
+
+
+class FileGetApi(JsonApiSpec[FileGetResult]):
+
+    def __init__(self, file_id: str) -> None:
+        super().__init__('https://webapi.115.com/category/get')
+        self.query['cid'] = file_id
+    
+    def _parse_json_result(self, json_obj: JsonResult) -> FileGetResult:
+        return super()._parse_json_result(json_obj)
+    
 
 
 class FileDeleteApi(VoidApiSpec):
@@ -187,6 +257,30 @@ class DirAddApi(JsonApiSpec[str]):
         return json_obj.get('file_id')
 
 
+class DirOrder(StrEnum):
+    """
+    Mode to sort files in directory.
+    """
+
+    FILE_NAME = 'file_name'
+    """Sort files by name."""
+
+    FILE_SIZE = 'file_size'
+    """Sort files by size."""
+
+    FILE_TYPE = 'file_type'
+    """Sort files by type."""
+
+    CREATE_TIME = 'user_ptime'
+    """Sort files by created time."""
+
+    UPDATE_TIME = 'user_utime'
+    """Sort files by last updated name."""
+
+    OPEN_TIME = 'user_otime'
+    """Sort files by last opened time."""
+
+
 class DirSortApi(VoidApiSpec):
 
     def __init__(self, dir_id: str, order: DirOrder, is_asc: bool) -> None:
@@ -203,6 +297,7 @@ class DirSortApi(VoidApiSpec):
 
 @dataclass
 class SpaceInfoResult:
+
     total_size: float
     remain_size: float
     used_size: float

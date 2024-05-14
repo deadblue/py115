@@ -1,18 +1,22 @@
 __author__ = 'deadblue'
 
-from .app import AppVersionApi
+from .app import (
+    AppName,
+    AppVersionApi
+)
 from .file import (
-    FileObject, 
-    FileListResult, 
+    FileObject,
+    FileListResult,
     FileListApi,
+    FileSearchApi,
+    FileGetResult,
+    FileGetApi,
     FileDeleteApi,
-    FileMoveApi, 
+    FileMoveApi,
     FileRenameApi,
-
     DirAddApi, 
     DirOrder, 
     DirSortApi,
-
     SpaceInfoResult,
     SpaceInfoApi,
 )
@@ -29,6 +33,7 @@ from .media import (
     VideoPlayDesktopApi
 )
 from .offline import (
+    TaskObject, 
     OfflineListResult,
     OfflineListApi,
     OfflineDeleteApi,
@@ -64,6 +69,9 @@ from .user import (
 from .exceptions import ApiException
 
 __all__ = [
+    'ApiException',
+
+    'AppName',
     'AppVersionApi',
 
     'DirAddApi',
@@ -76,12 +84,17 @@ __all__ = [
     'FileObject',
     'FileListResult',
     'FileListApi',
+    'FileGetResult',
+    'FileGetApi',
+    'FileSearchApi',
     'FileDeleteApi',
     'FileMoveApi',
     'FileRenameApi',
 
     'ImageLinkResult',
     'ImageLinkApi',
+
+    'TaskObject',
 
     'OfflineListResult',
     'OfflineListApi',
@@ -119,6 +132,4 @@ __all__ = [
 
     'UserInfoResult',
     'UserInfoApi',
-
-    'ApiException'
 ]

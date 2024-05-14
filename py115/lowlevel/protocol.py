@@ -1,15 +1,106 @@
 __author__ = 'deadblue'
 
-from typing import Awaitable, Dict
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from hashlib import md5
+from typing import Dict, Generic, TypeVar, Union
 
 import httpx
 
 from ._cookie import LowlevelCookieJar
 from ._crypto.ec115 import Cipher
-from .types import ApiSpec, R
 
 
+_DEFAULT_USER_AGNET = 'Mozilla/5.0'
 _COOKIE_DOMAIN = '.115.com'
+_COOKIE_URL = 'https://115.com/'
+
+R = TypeVar('R')
+
+@dataclass
+class ApiTimeout:
+    """
+    Timeout config for API.
+    """
+
+    connect: float
+    """Connect timeout in seconds."""
+    read: float
+    """Read timeout in seconds."""
+
+
+class ApiSpec(Generic[R], ABC):
+    """
+    ApiSpec is the super class of all 115 APIs.
+    """
+
+    _api_url: str
+    _use_ec: bool
+    _timeout: ApiTimeout
+    query: Dict[str, str]
+    form: Dict[str, str]
+
+    def __init__(self, api_url: str, use_ec: bool) -> None:
+        self._api_url = api_url
+        self._use_ec = use_ec
+        self._timeout = ApiTimeout(
+            connect=5.0, read=5.0
+        )
+        self.query = {}
+        self.form = {}
+
+    @property
+    def use_ec(self) -> bool:
+        return self._use_ec
+
+    @property
+    def timeout(self) -> ApiTimeout:
+        return self._timeout
+
+    def url(self) -> str:
+        return self._api_url
+
+    def payload(self) -> Union[bytes, None]:
+        return None
+
+    @abstractmethod
+    def parse_result(self, result: bytes) -> R:
+        pass
+
+
+class CommonParams:
+    """
+    CommonParams contains most-used parameters for low-level APIs.
+    """
+
+    _app_ver: str
+    _user_id: str
+    _user_hash: str
+    _user_key: str
+
+    def __init__(self, app_ver: str) -> None:
+        self._app_ver = app_ver
+
+    def set_user_info(self, user_id: int, user_key: str):
+        self._user_id = str(user_id)
+        self._user_key = user_key
+        self._user_hash = md5(self._user_id.encode()).hexdigest()
+
+    @property
+    def app_ver(self) -> str:
+        return self._app_ver
+    
+    @property
+    def user_id(self) -> str:
+        return self._user_id
+
+    @property
+    def user_hash(self) -> str:
+        return self._user_hash
+    
+    @property
+    def user_key(self) -> str:
+        return self._user_key
 
 
 class RetryException(Exception):
@@ -35,19 +126,39 @@ class Client:
         self._jar = LowlevelCookieJar()
         self._hc = httpx.Client(
             headers={
-                'User-Agent': 'Mozilla/5.0'
+                'User-Agent': _DEFAULT_USER_AGNET
             },
             cookies=self._jar
         )
 
+    def get_user_agent(self) -> str:
+        return self._hc.headers.get('User-Agent', _DEFAULT_USER_AGNET)
+
     def set_user_agent(self, name: str):
         self._hc.headers['User-Agent'] = name
 
+    user_agent = property(get_user_agent, set_user_agent)
+
     def import_cookies(self, cookies: Dict[str, str]):
+        """
+        Import cookies to client.
+
+        Args:
+            cookies (Dict[str, str]): Cookies that will be sent for HTTP API.
+        """
         for name, value in cookies.items():
             self._hc.cookies.set(name, value, domain=_COOKIE_DOMAIN)
 
-    def export_cookies(self, target_url='https://115.com/') -> Dict[str, str]:
+    def export_cookies(self, target_url=_COOKIE_URL) -> Dict[str, str]:
+        """
+        Export cookies from client.
+
+        Args:
+            target_url (str): The URL that export cookies for.
+        
+        Returns:
+            Dict[str, str]: Cookies for `target_url`.
+        """
         result = {}
         for cookie in self._jar.get_cookies_for_url(target_url):
             result[cookie.name] = cookie.value
@@ -80,6 +191,12 @@ class Client:
         )
 
     def call_api(self, spec: ApiSpec[R]) -> R:
+        """
+        Call a 115 API.
+
+        Args:
+            spec (ApiSpec[R]): An API spec.
+        """
         while True:
             request = self._build_request(spec)
             try:

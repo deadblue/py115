@@ -1,10 +1,10 @@
 __author__ = 'deadblue'
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntEnum
 from typing import List, Optional, Sequence
 
-from ..types import CommonParams
+from ..protocol import CommonParams
 from ._base import (
     JsonApiSpec, JsonResult, M115ApiSpec, VoidApiSpec
 )
@@ -12,15 +12,33 @@ from ._base import (
 
 @dataclass(init=False)
 class TaskObject:
+
     info_hash: str
+    """Unique ID of the task."""
+
     url: str
+    """Download URL."""
+
     name: str
+    """Task name."""
+
     size: int
-    add_time: int
+    """Total size to download."""
+
+    created_time: int
+    """Task created time."""
+
     status: int
+    """Task status."""
+
     percent: float
+    """Download progress in percentage."""
+
     file_id: str
+    """File or directory ID of the downloaded file."""
+
     dir_id: str
+    """Parent directory ID to save downloaded file."""
 
     def __new__(cls, json_obj: JsonResult):
         ret = object.__new__(cls)
@@ -28,8 +46,8 @@ class TaskObject:
         ret.url = json_obj.get('url')
         ret.name = json_obj.get('name')
         ret.size = json_obj.get('size', 0)
-        ret.add_time = json_obj.get('add_time', 0)
-        ret.status = json_obj.get('status', -1)
+        ret.created_time = json_obj.get('add_time', 0)
+        ret.status = json_obj.get('status', 1)
         ret.percent = float(json_obj.get('percentDone', 0))
         ret.file_id = json_obj.get('delete_file_id', '')
         ret.dir_id = json_obj.get('file_id', '')
@@ -38,6 +56,7 @@ class TaskObject:
 
 @dataclass
 class OfflineListResult:
+
     page_num: int
     page_count: int
     page_size: int
@@ -48,8 +67,6 @@ class OfflineListResult:
 
 
 class OfflineListApi(JsonApiSpec[OfflineListResult]):
-
-    _page: int
 
     def __init__(self, page_num: int = 1) -> None:
         super().__init__(
@@ -72,9 +89,8 @@ class OfflineListApi(JsonApiSpec[OfflineListResult]):
             ]
         )
 
-    def next_page(self):
-        self._page += 1
-        self.query['page'] = str(self._page)
+    def set_page(self, page_num: int):
+        self.query['page'] = str(page_num)
 
 
 class OfflineDeleteApi(VoidApiSpec):
@@ -90,6 +106,7 @@ class OfflineDeleteApi(VoidApiSpec):
 
 
 class OfflineClearFlag(Enum):
+
     DONE = 0
     ALL = 1
     FAILED = 2
@@ -109,6 +126,7 @@ class OfflineClearApi(VoidApiSpec):
 
 @dataclass
 class OfflineAddUrlResult:
+
     info_hash: str
     url: Optional[str] = None
     # TODO: Add more fields

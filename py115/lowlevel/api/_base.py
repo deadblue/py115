@@ -6,7 +6,7 @@ from typing import Any, Dict, Union
 from urllib.parse import urlencode
 
 from .._crypto import m115
-from ..types import ApiSpec, R
+from ..protocol import ApiSpec, R
 from .exceptions import ApiException
 
 

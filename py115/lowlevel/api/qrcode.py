@@ -3,7 +3,7 @@ __author__ = 'deadblue'
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, Union
+from typing import Dict
 
 from ._base import JsonApiSpec, JsonResult, R
 

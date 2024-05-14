@@ -1,7 +1,6 @@
 __author__ = 'deadblue'
 
-from .protocol import Client
-from .types import ApiSpec, CommonParams
+from .protocol import ApiSpec, Client, CommonParams
 
 __all__ = [
     'Client', 
