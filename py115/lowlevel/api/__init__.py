@@ -1,7 +1,7 @@
 __author__ = 'deadblue'
 
 from .app import (
-    AppName,
+    AppType,
     AppVersionApi
 )
 from .file import (
@@ -71,7 +71,7 @@ from .exceptions import ApiException
 __all__ = [
     'ApiException',
 
-    'AppName',
+    'AppType',
     'AppVersionApi',
 
     'DirAddApi',

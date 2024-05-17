@@ -7,20 +7,26 @@ from py115.compat import StrEnum
 from ._base import JsonApiSpec
 
 
-class AppName(StrEnum):
+class AppType(StrEnum):
 
-    WINDOWS = 'window_115'
-    MAC = 'mac_115'
-    LINUX = 'linux_115'
+    WEB = 'web'
+    WINDOWS = 'windows'
+    MAC = 'mac'
+    LINUX = 'linux'
 
 
 class AppVersionApi(JsonApiSpec[str]):
 
     _app_name: str
 
-    def __init__(self, app_name: AppName = AppName.LINUX) -> None:
+    def __init__(self, app_type: AppType = AppType.LINUX) -> None:
         super().__init__('https://appversion.115.com/1/web/1.0/api/chrome')
-        self._app_name = app_name.value
+        if app_type in (AppType.LINUX, AppType.MAC):
+            self._app_name = f'{app_type.value}_115'
+        elif app_type == AppType.WINDOWS:
+            self._app_name = f'window_115'
+        else:
+            raise Exception()
 
     def _parse_json_result(self, obj: Dict[str, Any]) -> str:
         return obj['data'][self._app_name]['version_code']

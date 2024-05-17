@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Dict
 
 from ._base import JsonApiSpec, JsonResult, R
+from .app import AppType
 
 
 class BaseQrcodeApi(JsonApiSpec[R]):
@@ -26,9 +27,9 @@ class QrcodeTokenResult:
 
 class QrcodeTokenApi(BaseQrcodeApi[QrcodeTokenResult]):
 
-    def __init__(self, app_name: str) -> None:
+    def __init__(self, app_type: AppType) -> None:
         super().__init__(
-            f'https://qrcodeapi.115.com/api/1.0/{app_name}/1.0/token'
+            f'https://qrcodeapi.115.com/api/1.0/{app_type.value}/1.0/token'
         )
 
     def _parse_json_result(self, json_obj: JsonResult) -> QrcodeTokenResult:
@@ -86,13 +87,13 @@ class QrcodeLoginResult:
 
 class QrcodeLoginApi(BaseQrcodeApi[QrcodeLoginResult]):
     
-    def __init__(self, app_name: str, uid: str) -> None:
+    def __init__(self, app_type: AppType, uid: str) -> None:
         super().__init__(
-            f'https://passportapi.115.com/app/1.0/{app_name}/1.0/login/qrcode'
+            f'https://passportapi.115.com/app/1.0/{app_type.value}/1.0/login/qrcode'
         )
         self.form.update({
             'account': uid,
-            'app': app_name
+            'app': app_type.value
         })
 
     def _parse_json_result(self, json_obj: JsonResult) -> QrcodeLoginResult:
@@ -104,13 +105,6 @@ class QrcodeLoginApi(BaseQrcodeApi[QrcodeLoginResult]):
         )
 
 
-_app_id_mapping = {
-    'web': 0,
-    'mac': 7,
-    'linux': 7,
-    'windows': 7,
-}
-
-def get_qrcode_image_url(app_name: str, uid: str) -> str:
-    app_id = _app_id_mapping.get(app_name, 0)
-    return f'https://qrcodeapi.115.com/api/1.0/{app_name}/1.0/qrcode?qrfrom=1&client={app_id}d&uid={uid}'
+def get_qrcode_image_url(app_type: AppType, uid: str) -> str:
+    app_id = 0 if app_type == AppType.WEB else 7
+    return f'https://qrcodeapi.115.com/api/1.0/{app_type.value}/1.0/qrcode?qrfrom=1&client={app_id}d&uid={uid}'
