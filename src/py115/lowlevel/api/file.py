@@ -10,7 +10,7 @@ from py115.lowlevel.types.file import (
 from ._base import (
     JsonApiSpec, JsonResult, VoidApiSpec
 )
-from ._error import CODE_FILE_ORDER_INVALID
+from ._error import FILE_ORDER_INVALID
 
 
 class FileListApi(JsonApiSpec[FileListResult]):
@@ -41,7 +41,7 @@ class FileListApi(JsonApiSpec[FileListResult]):
     
     def _get_error_code(self, json_obj: JsonResult) -> int:
         err_code = super()._get_error_code(json_obj)
-        if err_code == CODE_FILE_ORDER_INVALID:
+        if err_code == FILE_ORDER_INVALID:
             self._order = json_obj.get('order')
             self.query.update({
                 'o': self._order,

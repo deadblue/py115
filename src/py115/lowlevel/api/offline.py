@@ -1,16 +1,20 @@
 __author__ = 'deadblue'
 
-from dataclasses import dataclass
-from typing import List, Sequence
+from typing import Dict, List, Sequence
 
 from py115.lowlevel.types.common import CommonParams
 from py115.lowlevel.types.offline import (
     TaskInfo, 
     OfflineListResult, 
-    OfflineClearFlag
+    OfflineClearFlag,
+    OfflineAddError,
+    OfflineAddResult,
 )
 from ._base import (
     JsonApiSpec, JsonResult, M115ApiSpec, VoidApiSpec
+)
+from ._error import (
+    OFFLINE_INVALID_LINK, OFFLINE_TASK_EXISTED
 )
 
 
@@ -70,15 +74,13 @@ class OfflineClearApi(VoidApiSpec):
         self.form['flag'] = str(flag.value)
 
 
-@dataclass
-class OfflineAddUrlResult:
-
-    info_hash: str
-    url: str | None = None
-
+_add_error_mapping: Dict[int, OfflineAddError] = {
+    OFFLINE_INVALID_LINK: OfflineAddError.INVALID_LINK,
+    OFFLINE_TASK_EXISTED: OfflineAddError.TASK_EXISTED
+}
 
 
-class OfflineAddUrlsApi(M115ApiSpec[List[OfflineAddUrlResult]]):
+class OfflineAddUrlsApi(M115ApiSpec[List[OfflineAddResult]]):
 
     def __init__(self, cp: CommonParams, urls: Sequence[str]) -> None:
         super().__init__('https://lixian.115.com/lixianssp/?ac=add_task_urls')
@@ -91,11 +93,19 @@ class OfflineAddUrlsApi(M115ApiSpec[List[OfflineAddUrlResult]]):
             key = f'url[{index}]'
             self.form[key] = url
 
-    def _parse_m115_result(self, m115_obj: JsonResult) -> List[OfflineAddUrlResult]:
-        result: List[OfflineAddUrlResult] = []
-        for task in m115_obj['result']:
-            result.append(OfflineAddUrlResult(
-                info_hash=task['info_hash'],
-                url=task.get('url', None)
-            ))
+    def _parse_m115_result(self, m115_obj: JsonResult) -> List[OfflineAddResult]:
+        result = []
+        for ar in m115_obj['result']:
+            error_code = ar['errcode']
+            if error_code == 0:
+                result.append(OfflineAddResult(
+                    error=OfflineAddError.OK,
+                    info_hash=ar['info_hash'],
+                    url=ar['url']
+                ))
+            else:
+                result.append(OfflineAddResult(
+                    error=_add_error_mapping.get(error_code, OfflineAddError.UNKNOWN),
+                    url=ar['url']
+                ))
         return result

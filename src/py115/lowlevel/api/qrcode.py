@@ -10,7 +10,7 @@ from py115.lowlevel._utils import (
     now_str
 )
 from ._base import JsonApiSpec, JsonResult, R
-from ._error import CODE_QRCODE_EXPIRED
+from ._error import QRCODE_EXPIRED
 
 
 class QrcodeBaseApi(JsonApiSpec[R]):
@@ -53,13 +53,13 @@ class QrcodeStatusApi(QrcodeBaseApi[QrcodeStatus]):
 
     def _get_error_code(self, json_obj: JsonResult) -> int:
         err_code = super()._get_error_code(json_obj)
-        if err_code == CODE_QRCODE_EXPIRED:
+        if err_code == QRCODE_EXPIRED:
             err_code = 0
         return err_code
 
     def _parse_json_result(self, json_obj: JsonResult) -> QrcodeStatus:
         code = json_obj.get('code', 0)
-        if code == CODE_QRCODE_EXPIRED:
+        if code == QRCODE_EXPIRED:
             return QrcodeStatus.EXPIRED
         data_obj = json_obj.get('data', None)
         if data_obj is None:

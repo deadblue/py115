@@ -81,5 +81,5 @@ class OfflineAddError(IntEnum):
 @dataclass
 class OfflineAddResult:
     error: OfflineAddError
-    info_hash: str | None
-    url: str | None
+    info_hash: str | None = None
+    url: str | None = None
