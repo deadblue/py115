@@ -1,9 +1,9 @@
-name: Publish to PyPI
+name: Publish to Test PyPI
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - master
 
 permissions:
   contents: read
@@ -13,9 +13,7 @@ jobs:
   build-and-publish:
     name: Build and publish
     runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      id-token: write
+    environment: test-pypi
     steps:
     - name: Check out source
       uses: actions/checkout@v4
@@ -31,3 +29,7 @@ jobs:
       run: python -m build
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        skip-existing: true
+        verbose: true
