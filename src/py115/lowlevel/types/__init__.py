@@ -1,7 +1,6 @@
 __author__ = 'deadblue'
 
 from .common import CommonParams
-
 from .app import (
     AppName, AppVersion, AppVersionResult
 )
@@ -10,12 +9,22 @@ from .download import DownloadResult
 from .file import (
     FileInfo, FileListResult, FileType
 )
+from .label import (
+    LabelColor, LabelInfo, LabelListResult
+)
+from .media import ImageInfo, VideoInfo
 from .offline import (
     TaskInfo, 
     OfflineListResult,
     OfflineClearFlag,
     OfflineAddError,
     OfflineAddResult
+)
+from .qrcode import (
+    QrcodeClient, 
+    QrcodeToken, 
+    QrcodeStatus, 
+    QrcodeLoginResult
 )
 from .storage import StorageInfo
 from .upload import (
@@ -43,11 +52,23 @@ __all__ = [
     FileListResult,
     FileType,
 
+    LabelColor, 
+    LabelInfo, 
+    LabelListResult,
+
+    ImageInfo, 
+    VideoInfo,
+
     TaskInfo,
     OfflineListResult,
     OfflineClearFlag,
     OfflineAddError,
     OfflineAddResult,
+
+    QrcodeClient, 
+    QrcodeToken, 
+    QrcodeStatus, 
+    QrcodeLoginResult,
 
     StorageInfo,
 
