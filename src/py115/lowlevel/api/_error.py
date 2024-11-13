@@ -1,0 +1,6 @@
+__author__ = 'deadblue'
+
+CODE_FILE_ORDER_INVALID = 20130827
+
+CODE_QRCODE_EXPIRED = 40199002
+
