@@ -31,3 +31,13 @@ class DirSetOrderApi(VoidApiSpec):
             'user_asc': '1' if is_asc else '0',
             'fc_mix': 0
         })
+
+
+class DirGetIdApi(JsonApiSpec[str]):
+
+    def __init__(self, path: str):
+        super().__init__('https://webapi.115.com/files/getid')
+        self.query['path'] = path
+    
+    def _parse_json_result(self, json_obj: JsonResult) -> str:
+        return json_obj.get('id')

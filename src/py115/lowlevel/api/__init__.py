@@ -5,7 +5,8 @@ from .app import (
 )
 from .dir import (
     DirMakeApi, 
-    DirSetOrderApi
+    DirSetOrderApi,
+    DirGetIdApi
 )
 from .download import DownloadApi
 from .file import (
@@ -58,6 +59,7 @@ __all__ = [
 
     DirMakeApi,
     DirSetOrderApi,
+    DirGetIdApi,
 
     DownloadApi,
 

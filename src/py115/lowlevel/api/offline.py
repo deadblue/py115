@@ -82,7 +82,13 @@ _add_error_mapping: Dict[int, OfflineAddError] = {
 
 class OfflineAddUrlsApi(M115ApiSpec[List[OfflineAddResult]]):
 
-    def __init__(self, cp: CommonParams, urls: Sequence[str]) -> None:
+    def __init__(
+            self, 
+            cp: CommonParams, 
+            urls: Sequence[str],
+            *,
+            save_dir_id: str | None = None
+        ) -> None:
         super().__init__('https://lixian.115.com/lixianssp/?ac=add_task_urls')
         self.form.update({
             'ac': 'add_task_urls',
@@ -92,6 +98,8 @@ class OfflineAddUrlsApi(M115ApiSpec[List[OfflineAddResult]]):
         for index, url in enumerate(urls):
             key = f'url[{index}]'
             self.form[key] = url
+        if save_dir_id is not None:
+            self.form['wp_path_id'] = save_dir_id
 
     def _parse_m115_result(self, m115_obj: JsonResult) -> List[OfflineAddResult]:
         result = []
