@@ -34,6 +34,10 @@ from .label import (
     LabelEditApi, 
     LabelDeleteApi
 )
+from .media import (
+    ImageLinkApi, 
+    VideoPlayWebApi
+)
 from .offline import (
     OfflineListApi,
     OfflineDeleteApi,
@@ -80,6 +84,9 @@ __all__ = [
     LabelAddApi, 
     LabelEditApi, 
     LabelDeleteApi,
+
+    ImageLinkApi, 
+    VideoPlayWebApi,
 
     OfflineListApi,
     OfflineDeleteApi,

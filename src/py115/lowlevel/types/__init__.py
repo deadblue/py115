@@ -11,30 +11,52 @@ from .file import (
     FileInfo, FileListResult, FileType
 )
 from .offline import (
-    TaskInfo, OfflineListResult
+    TaskInfo, 
+    OfflineListResult,
+    OfflineClearFlag,
+    OfflineAddError,
+    OfflineAddResult
 )
 from .storage import StorageInfo
+from .upload import (
+    UploadInfo, 
+    UploadInitOssResult, 
+    UploadInitDoneResult, 
+    UploadInitSignResult, 
+    UploadInitResult, 
+    UploadToken
+)
 from .user import UserInfo
 
 __all__ = [
-    'CommonParams',
+    CommonParams,
 
-    'AppName',
-    'AppVersion',
-    'AppVersionResult',
+    AppName,
+    AppVersion,
+    AppVersionResult,
 
-    'DirOrder',
+    DirOrder,
 
-    'DownloadResult',
+    DownloadResult,
 
-    'FileInfo',
-    'FileListResult',
-    'FileType',
+    FileInfo,
+    FileListResult,
+    FileType,
 
-    'TaskInfo',
-    'OfflineListResult',
+    TaskInfo,
+    OfflineListResult,
+    OfflineClearFlag,
+    OfflineAddError,
+    OfflineAddResult,
 
-    'StorageInfo',
+    StorageInfo,
 
-    'UserInfo'
+    UploadInfo, 
+    UploadInitOssResult, 
+    UploadInitDoneResult, 
+    UploadInitSignResult, 
+    UploadInitResult, 
+    UploadToken,
+
+    UserInfo
 ]

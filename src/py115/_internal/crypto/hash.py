@@ -25,7 +25,7 @@ def digest_range(stream: BinaryIO, range_spec: str) -> str:
     tmp = range_spec.split('-')
     if len(tmp) != 2:
         return None
-    offset = int(tmp[0]), 
+    offset = int(tmp[0])
     length = int(tmp[1]) - offset + 1
     stream.seek(offset, io.SEEK_SET)
     return hashlib.sha1(
