@@ -13,12 +13,54 @@ from ._base import (
 from ._error import FILE_ORDER_INVALID
 
 
-class FileListApi(JsonApiSpec[FileListResult]):
+class BaseFileListApi(JsonApiSpec[FileListResult]):
+
+    _offset: int = 0
+    _limit: int = 0
+
+    def __init__(self, api_url: str, offset: int, limit: int):
+        super().__init__(api_url)
+        self._offset = offset
+        self._limit = limit
+        self.query.update({
+            'offset': str(offset),
+            'limit': str(limit)
+        })
+
+    def _get_offset(self) -> int:
+        return self._offset
+    
+    def _set_offset(self, value: int):
+        self._offset = value
+        self.query['offset'] = str(value)
+
+    offset = property(
+        fget=_get_offset, 
+        fset=_set_offset
+    )
+
+    @property
+    def limit(self) -> int:
+        return self._limit
+
+    def _parse_json_result(self, json_obj: JsonResult) -> FileListResult:
+        return FileListResult(
+            offset=json_obj.get('offset'),
+            limit=json_obj.get('page_size'),
+            order=json_obj.get('order'),
+            asc=json_obj.get('is_asc'),
+            count=json_obj.get('count'),
+            files=[
+                FileInfo(file_obj) for file_obj in json_obj['data']
+            ]
+        )
+
+class FileListApi(BaseFileListApi):
 
     _order: DirOrder = DirOrder.CREATED_TIME
 
     def __init__(self, dir_id: str, offset: int = 0, limit: int = 115) -> None:
-        super().__init__('')
+        super().__init__('', offset, limit)
         self._order = 'user_ptime'
         self.query.update({
             'aid': '1',
@@ -26,8 +68,6 @@ class FileListApi(JsonApiSpec[FileListResult]):
             'show_dir': '1',
             'o': self._order,
             'asc': '1',
-            'offset': str(offset),
-            'limit': str(limit),
             'fc_mix': '0',
             'natsort': '1',
             'format': 'json'
@@ -38,7 +78,7 @@ class FileListApi(JsonApiSpec[FileListResult]):
             return 'https://aps.115.com/natsort/files.php'
         else:
             return 'https://webapi.115.com/files'
-    
+
     def _get_error_code(self, json_obj: JsonResult) -> int:
         err_code = super()._get_error_code(json_obj)
         if err_code == FILE_ORDER_INVALID:
@@ -50,23 +90,8 @@ class FileListApi(JsonApiSpec[FileListResult]):
             raise RetryException()
         return err_code
 
-    def _parse_json_result(self, json_obj: JsonResult) -> FileListResult:
-        return FileListResult(
-            offset=json_obj.get('offset'),
-            limit=json_obj.get('limit'),
-            order=json_obj.get('order'),
-            asc=json_obj.get('is_asc'),
-            count=json_obj.get('count'),
-            files=[
-                FileInfo(file_obj) for file_obj in json_obj['data']
-            ]
-        )
-    
-    def set_offset(self, value: int):
-        self.query['offset'] = str(value)
 
-
-class FileSearchApi(JsonApiSpec[FileListResult]):
+class FileSearchApi(BaseFileListApi):
 
     def __init__(
             self, 
@@ -77,35 +102,20 @@ class FileSearchApi(JsonApiSpec[FileListResult]):
             *,
             file_type: FileType | None = None
         ) -> None:
-        super().__init__('https://webapi.115.com/files/search')
+        super().__init__(
+            'https://webapi.115.com/files/search', offset, limit
+        )
         self.query.update({
             'aid': '1',
             'cid': dir_id,
             'search_value': keyword,
-            'offset': str(offset),
-            'limit': str(limit),
             'format': 'json'
         })
         if file_type is not None:
             self.query['type'] = str(file_type.value)
-    
-    def _parse_json_result(self, json_obj: JsonResult) -> FileListResult:
-        return FileListResult(
-            offset=json_obj.get('offset'),
-            limit=json_obj.get('page_size'),
-            order=json_obj.get('order'),
-            asc=json_obj.get('is_ac'),
-            count=json_obj.get('count'),
-            files=[
-                FileInfo(file_obj) for file_obj in json_obj['data']
-            ]
-        )
-
-    def set_offset(self, value: int):
-        self.query['offset'] = str(value)
 
 
-class FileStaredApi(JsonApiSpec[FileListResult]):
+class FileStaredApi(BaseFileListApi):
     """
     API spec for retrieving stared files.
     """
@@ -117,33 +127,21 @@ class FileStaredApi(JsonApiSpec[FileListResult]):
             *,
             file_type: FileType | None = None
         ) -> None:
-        super().__init__('https://webapi.115.com/files')
+        super().__init__(
+            'https://webapi.115.com/files', offset, limit
+        )
         self.query.update({
             'aid': '1',
             'cid': '0',
             'star': '1',
             'show_dir': '1',
-            'offset': str(offset),
-            'limit': str(limit),
             'format': 'json'
         })
         if file_type is not None:
             self.query['type'] = str(file_type.value)
 
-    def _parse_json_result(self, json_obj: JsonResult) -> FileListResult:
-        return FileListResult(
-            offset=json_obj.get('offset'),
-            limit=json_obj.get('page_size'),
-            order=json_obj.get('order'),
-            asc=json_obj.get('is_ac'),
-            count=json_obj.get('count'),
-            files=[
-                FileInfo(file_obj) for file_obj in json_obj['data']
-            ]
-        )
 
-
-class FileLabeledApi(JsonApiSpec[FileListResult]):
+class FileLabeledApi(BaseFileListApi):
     """
     API spec for retrieving files with specific label.
     """
@@ -156,30 +154,18 @@ class FileLabeledApi(JsonApiSpec[FileListResult]):
             *,
             file_type: FileType | None = None
         ) -> None:
-        super().__init__('https://webapi.115.com/files/search')
+        super().__init__(
+            'https://webapi.115.com/files/search', offset, limit
+        )
         self.query.update({
             'aid': '1',
             'cid': '0',
             'file_label': label_id,
             'show_dir': '1',
-            'offset': str(offset),
-            'limit': str(limit),
             'format': 'json'
         })
         if file_type is not None:
             self.query['type'] = str(file_type.value)
-
-    def _parse_json_result(self, json_obj: JsonResult) -> FileListResult:
-        return FileListResult(
-            offset=json_obj.get('offset'),
-            limit=json_obj.get('page_size'),
-            order=json_obj.get('order'),
-            asc=json_obj.get('is_ac'),
-            count=json_obj.get('count'),
-            files=[
-                FileInfo(file_obj) for file_obj in json_obj['data']
-            ]
-        )
 
 
 class FileGetInfoApi(JsonApiSpec[FileInfo]):
