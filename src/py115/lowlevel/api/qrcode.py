@@ -88,5 +88,5 @@ class QrcodeLoginApi(QrcodeBaseApi[QrcodeLoginResult]):
         )
 
 
-def get_qrcode_image_url(uid: str) -> str:
+def qrcode_get_image_url(uid: str) -> str:
     return f'https://qrcodeapi.115.com/api/1.0/web/1.0/qrcode?qrfrom=1&client=0d&uid={uid}'

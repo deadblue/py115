@@ -14,10 +14,11 @@ from .label import (
 )
 from .media import ImageInfo, VideoInfo
 from .offline import (
+    TaskStatus,
     TaskInfo, 
     OfflineListResult,
     OfflineClearFlag,
-    OfflineAddError,
+    OfflineErrorReason,
     OfflineAddResult
 )
 from .qrcode import (
@@ -38,46 +39,47 @@ from .upload import (
 from .user import UserInfo
 
 __all__ = [
-    CommonParams,
+    'CommonParams',
 
-    AppName,
-    AppVersion,
-    AppVersionResult,
+    'AppName',
+    'AppVersion',
+    'AppVersionResult',
 
-    DirOrder,
+    'DirOrder',
 
-    DownloadResult,
+    'DownloadResult',
 
-    FileInfo,
-    FileListResult,
-    FileType,
+    'FileInfo',
+    'FileListResult',
+    'FileType',
 
-    LabelColor, 
-    LabelInfo, 
-    LabelListResult,
+    'LabelColor', 
+    'LabelInfo', 
+    'LabelListResult',
 
-    ImageInfo, 
-    VideoInfo,
+    'ImageInfo', 
+    'VideoInfo',
 
-    TaskInfo,
-    OfflineListResult,
-    OfflineClearFlag,
-    OfflineAddError,
-    OfflineAddResult,
+    'TaskStatus',
+    'TaskInfo',
+    'OfflineListResult',
+    'OfflineClearFlag',
+    'OfflineErrorReason',
+    'OfflineAddResult',
 
-    QrcodeClient, 
-    QrcodeToken, 
-    QrcodeStatus, 
-    QrcodeLoginResult,
+    'QrcodeClient', 
+    'QrcodeToken', 
+    'QrcodeStatus', 
+    'QrcodeLoginResult',
 
-    StorageInfo,
+    'StorageInfo',
 
-    UploadInfo, 
-    UploadInitOssResult, 
-    UploadInitDoneResult, 
-    UploadInitSignResult, 
-    UploadInitResult, 
-    UploadToken,
+    'UploadInfo', 
+    'UploadInitOssResult', 
+    'UploadInitDoneResult', 
+    'UploadInitSignResult', 
+    'UploadInitResult', 
+    'UploadToken',
 
-    UserInfo
+    'UserInfo'
 ]

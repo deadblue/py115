@@ -7,6 +7,15 @@ from typing import Any, Dict, List
 from py115.lowlevel._utils import to_timestamp
 
 
+class VideoDefinition(IntEnum):
+    SD        = 1
+    HD        = 2
+    FHD       = 3
+    FHD_1080P = 4
+    UHD_4K    = 5
+    ORIGINAL  = 100
+
+
 @dataclass(init=False)
 class FileInfo:
     """
@@ -58,7 +67,7 @@ class FileInfo:
     media_duration: int | None = None
     """Media duration in seconds for audio/video file."""
 
-    video_definition: int | None = None
+    video_definition: VideoDefinition | None = None
     """Video definition for video file."""
 
     def __init__(self, file_obj: Dict[str, Any]) -> None:
@@ -78,7 +87,8 @@ class FileInfo:
             self.sha1 = file_obj['sha']
             self.is_video = file_obj.get('iv', 0) == 1
             self.media_duration = file_obj.get('play_long', None)
-            self.video_definition = file_obj.get('vdi', None)
+            if 'vdi' in file_obj:
+                self.video_definition = VideoDefinition(file_obj['vdi'])
         for key in ('tu', 'te', 't'):
             if key in file_obj:
                 self.modified_time = to_timestamp(file_obj[key])

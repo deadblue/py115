@@ -49,58 +49,67 @@ from .qrcode import (
     QrcodeTokenApi, 
     QrcodeStatusApi,
     QrcodeLoginApi,
-    get_qrcode_image_url
+    qrcode_get_image_url
 )
 from .storage import StorageInfoApi
+from .upload import (
+    UploadInfoApi, 
+    UploadInitApi,
+    UploadTokenApi
+)
 from .user import UserInfoApi
 
 __all__ = [
-    AppVersionApi,
+    'AppVersionApi',
 
-    DirMakeApi,
-    DirSetOrderApi,
-    DirGetIdApi,
+    'DirMakeApi',
+    'DirSetOrderApi',
+    'DirGetIdApi',
 
-    DownloadApi,
+    'DownloadApi',
 
-    FileListApi,
-    FileSearchApi,
-    FileStaredApi,
-    FileLabeledApi,
-    FileGetInfoApi,
-    FileDeleteApi,
-    FileMoveApi,
-    FileBatchRenameApi,
-    FileSetStarApi,
-    FileSetLabelsApi,
-    FileBatchAddLabelsApi,
-    FileBatchRemoveLabelsApi,
-    FileBatchSetLabelsApi,
-    FileSetDescriptionApi,
-    FileGetDescriptionApi,
-    FileHideApi,
-    FileSetTopApi,
-    FileShowHiddenApi,
+    'FileListApi',
+    'FileSearchApi',
+    'FileStaredApi',
+    'FileLabeledApi',
+    'FileGetInfoApi',
+    'FileDeleteApi',
+    'FileMoveApi',
+    'FileBatchRenameApi',
+    'FileSetStarApi',
+    'FileSetLabelsApi',
+    'FileBatchAddLabelsApi',
+    'FileBatchRemoveLabelsApi',
+    'FileBatchSetLabelsApi',
+    'FileSetDescriptionApi',
+    'FileGetDescriptionApi',
+    'FileHideApi',
+    'FileSetTopApi',
+    'FileShowHiddenApi',
 
-    LabelListApi, 
-    LabelAddApi, 
-    LabelEditApi, 
-    LabelDeleteApi,
+    'LabelListApi', 
+    'LabelAddApi', 
+    'LabelEditApi', 
+    'LabelDeleteApi',
 
-    ImageLinkApi, 
-    VideoPlayWebApi,
+    'ImageLinkApi', 
+    'VideoPlayWebApi',
 
-    OfflineListApi,
-    OfflineDeleteApi,
-    OfflineClearApi,
-    OfflineAddUrlsApi,
+    'OfflineListApi',
+    'OfflineDeleteApi',
+    'OfflineClearApi',
+    'OfflineAddUrlsApi',
 
-    QrcodeTokenApi,
-    QrcodeStatusApi,
-    QrcodeLoginApi,
-    get_qrcode_image_url,
+    'QrcodeTokenApi',
+    'QrcodeStatusApi',
+    'QrcodeLoginApi',
+    'qrcode_get_image_url',
 
-    StorageInfoApi,
+    'StorageInfoApi',
 
-    UserInfoApi,
+    'UploadInfoApi', 
+    'UploadInitApi',
+    'UploadTokenApi',
+
+    'UserInfoApi',
 ]

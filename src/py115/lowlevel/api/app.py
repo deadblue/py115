@@ -1,7 +1,7 @@
 __author__ = 'deadblue'
 
 from py115.lowlevel.types.app import (
-    AppVersionResult, AppName, AppVersion
+    AppName, AppVersion, AppVersionResult
 )
 from ._base import JsonApiSpec, JsonResult
 

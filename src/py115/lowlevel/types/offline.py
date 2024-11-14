@@ -5,6 +5,13 @@ from enum import IntEnum
 from typing import Any, Dict, List
 
 
+class TaskStatus(IntEnum):
+    FAILED  = -1
+    STOPPED = 0
+    RUNNING = 1
+    DONE    = 2
+
+
 @dataclass(init=False)
 class TaskInfo:
 
@@ -23,7 +30,7 @@ class TaskInfo:
     created_time: int
     """Task created time."""
 
-    status: int
+    status: TaskStatus
     """Task status."""
 
     percent: float
@@ -44,7 +51,7 @@ class TaskInfo:
         self.name = task_obj['name']
         self.size = task_obj['size']
         self.created_time = task_obj['add_time']
-        self.status = task_obj['status']
+        self.status = TaskStatus(task_obj['status'])
         self.percent = float(task_obj.get('percentDone', 0))
         self.file_id = task_obj['delete_file_id']
         self.parent_id = task_obj['wp_path_id']
@@ -71,15 +78,14 @@ class OfflineClearFlag(IntEnum):
     ALL_AND_DELETE = 5
 
 
-class OfflineAddError(IntEnum):
+class OfflineErrorReason(IntEnum):
     UNKNOWN      = -1
-    OK           = 0
     TASK_EXISTED = 1
-    INVALID_LINK = 2
+    LINK_INVALID = 2
 
 
 @dataclass
 class OfflineAddResult:
-    error: OfflineAddError
     info_hash: str | None = None
+    reason: OfflineErrorReason | None = None
     url: str | None = None

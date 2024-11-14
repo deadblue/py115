@@ -7,14 +7,14 @@ from py115.lowlevel.types.offline import (
     TaskInfo, 
     OfflineListResult, 
     OfflineClearFlag,
-    OfflineAddError,
+    OfflineErrorReason,
     OfflineAddResult,
 )
 from ._base import (
     JsonApiSpec, JsonResult, M115ApiSpec, VoidApiSpec
 )
 from ._error import (
-    OFFLINE_INVALID_LINK, OFFLINE_TASK_EXISTED
+    OFFLINE_LINK_INVALID, OFFLINE_TASK_EXISTED
 )
 
 
@@ -53,7 +53,6 @@ class OfflineDeleteApi(VoidApiSpec):
     def __init__(
             self, 
             info_hashes: Sequence[str], 
-            *,
             delete_files: bool = False
         ) -> None:
         super().__init__(
@@ -74,9 +73,9 @@ class OfflineClearApi(VoidApiSpec):
         self.form['flag'] = str(flag.value)
 
 
-_add_error_mapping: Dict[int, OfflineAddError] = {
-    OFFLINE_INVALID_LINK: OfflineAddError.INVALID_LINK,
-    OFFLINE_TASK_EXISTED: OfflineAddError.TASK_EXISTED
+_add_error_mapping: Dict[int, OfflineErrorReason] = {
+    OFFLINE_LINK_INVALID: OfflineErrorReason.LINK_INVALID,
+    OFFLINE_TASK_EXISTED: OfflineErrorReason.TASK_EXISTED
 }
 
 
@@ -86,7 +85,6 @@ class OfflineAddUrlsApi(M115ApiSpec[List[OfflineAddResult]]):
             self, 
             cp: CommonParams, 
             urls: Sequence[str],
-            *,
             save_dir_id: str | None = None
         ) -> None:
         super().__init__('https://lixian.115.com/lixianssp/?ac=add_task_urls')
@@ -107,13 +105,12 @@ class OfflineAddUrlsApi(M115ApiSpec[List[OfflineAddResult]]):
             error_code = ar['errcode']
             if error_code == 0:
                 result.append(OfflineAddResult(
-                    error=OfflineAddError.OK,
                     info_hash=ar['info_hash'],
                     url=ar['url']
                 ))
             else:
                 result.append(OfflineAddResult(
-                    error=_add_error_mapping.get(error_code, OfflineAddError.UNKNOWN),
+                    reason=_add_error_mapping.get(error_code, OfflineErrorReason.UNKNOWN),
                     url=ar['url']
                 ))
         return result

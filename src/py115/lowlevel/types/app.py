@@ -13,14 +13,14 @@ class AppVersion:
 
 
 class AppName(StrEnum):
-    LifeAndroid = 'Android'
-    LifeiOS = 'iOS-iPhone'
-    TV = 'Android-tv'
-    YunAndroid = 'Android-Yun'
-    YuniOS = 'iOS-iPhone-Yun'
-    BrowserWindows = 'PC-115chrome_x64'
-    BrowserMacOS = 'MAC-115chrome'
-    BrowserLinux = 'Linux-115chrome'
+    LIFE_ANDROID    = 'Android'
+    LIFE_IOS        = 'iOS-iPhone'
+    YUN_ANDROID     = 'Android-Yun'
+    YUN_IOS         = 'iOS-iPhone-Yun'
+    TV              = 'Android-tv'
+    BROWSER_WINDOWS = 'PC-115chrome_x64'
+    BROWSER_MACOS   = 'MAC-115chrome'
+    BROWSER_LINUX   = 'Linux-115chrome'
 
 
 AppVersionResult: TypeAlias = Dict[AppName, AppVersion]
