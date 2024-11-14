@@ -1,7 +1,6 @@
 __author__ = 'deadblue'
 
-from ._async import AsyncClient
-from ._client import Client
+from ._client import Client, AsyncClient
 
 __all__ = [
     'AsyncClient',
