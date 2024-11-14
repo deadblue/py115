@@ -1,7 +1,9 @@
 __author__ = 'deadblue'
 
-from ._client import Client, AsyncClient
+from ._async import AsyncClient
+from ._client import Client
 
 __all__ = [
-    'Client', 'AsyncClient'
+    'AsyncClient',
+    'Client'
 ]

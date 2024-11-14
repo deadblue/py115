@@ -10,29 +10,10 @@ from py115.lowlevel.spec import ApiSpec, R
 from ._base import BaseClient
 
 
-DEFAULT_USER_AGNET = 'Mozilla/5.0'
-
-
 class Client(BaseClient[httpx.Client]):
     """
-    Low-level API client
+    Low-level API client.
     """
-
-    def __init__(self) -> None:
-        super().__init__()
-        self._hc = httpx.Client(
-            headers={
-                'User-Agent': DEFAULT_USER_AGNET
-            },
-            cookies=self._jar,
-            limits=httpx.Limits(
-                max_connections=None,
-                max_keepalive_connections=20,
-                keepalive_expiry=10.0
-            ),
-            verify=False,
-            proxy='http://127.0.0.1:9999'
-        )
 
     def call_api(self, spec: ApiSpec[R]) -> R:
         while True:
@@ -52,6 +33,7 @@ class Client(BaseClient[httpx.Client]):
     
     def __enter__(self):
         self._hc.__enter__()
+        return self
     
     def __exit__(
             self, 
@@ -62,22 +44,32 @@ class Client(BaseClient[httpx.Client]):
         self._hc.__exit__(exc_type, exc_value, traceback)
 
 
+
 class AsyncClient(BaseClient[httpx.AsyncClient]):
     """
-    Low-level async API client
+    Low-level asynchronous API client.
     """
 
-    def __init__(self) -> None:
-        super().__init__()
-        self._hc = httpx.AsyncClient(
-            headers={
-                'User-Agent': DEFAULT_USER_AGNET
-            },
-            cookies=self._jar
-        )
-
     async def call_api(self, spec: ApiSpec[R]) -> Awaitable[R]:
-        req = self._prepare_request(spec)
-        resp = await self._hc.send(req)
-        # TODO
-        pass
+        while True:
+            try:
+                req = self._prepare_request(spec)
+                resp = await self._hc.send(req)
+                body = resp.content
+                if spec.use_ec:
+                    body = self._ecc.decode(body)
+                return spec.parse_result(body)
+            except (httpx.TimeoutException, RetryException):
+                pass
+
+    async def __aenter__(self):
+        await self._hc.__aenter__()
+        return self
+    
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None = None,
+        exc_value: BaseException | None = None,
+        traceback: TracebackType | None = None,
+    ):
+        await self._hc.__aexit__(exc_type, exc_value, traceback)
