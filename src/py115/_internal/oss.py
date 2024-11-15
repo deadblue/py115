@@ -2,6 +2,8 @@ __author__ = 'deadblue'
 
 import base64
 
+REGION = 'cn-shenzhen'
+
 ENDPOINT='https://oss-cn-shenzhen.aliyuncs.com'
 
 def encode_header_value(v: str) -> str:

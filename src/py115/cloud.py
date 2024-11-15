@@ -1,19 +1,32 @@
 __author__ = 'deadblue'
 
+import os.path as ospath
+from re import S
 from typing import (
-    Any, Dict, Iterable, Tuple
+    Any, Dict, Iterable, Tuple, BinaryIO
 )
 
+from py115._internal import oss
+from py115._internal.crypto.hash import (
+    digest, digest_range
+)
 from py115.lowlevel import Client
 from py115.lowlevel.api import *
 from py115.lowlevel.types import (
     CommonParams,
     AppName, 
     QrcodeClient, 
-    QrcodeStatus
+    QrcodeStatus,
+    UploadInitOssResult,
+    UploadInitDoneResult, 
+    UploadInitSignResult
 )
 from py115.types import (
-    Credential, QrcodeSession, File, Task
+    Credential, 
+    QrcodeSession, 
+    File, Task, 
+    DownloadTicket, 
+    UploadTicket
 )
 
 
@@ -57,12 +70,19 @@ class StorageService:
 
     def __init__(self, lac: Client, lcp: CommonParams) -> None:
         self._lac, self._lcp = lac, lcp
-    
+
     def list_files(self, dir_id: str) -> Iterable[File]:
+        """Retrieve files under a directory.
+
+        Args:
+            dir_id (str): Directory ID where to retrive files.
+
+        Yields:
+            File: A file object under the directory.
+        """
         spec = FileListApi(
             dir_id=dir_id,
-            offset=0,
-            limit=24
+            offset=0
         )
         while True:
             result = self._lac.call_api(spec)
@@ -70,18 +90,142 @@ class StorageService:
             spec.offset += result.limit
             if spec.offset >= result.count: break
 
-    def search_files(self, dir_id: str, keyword: str) -> Iterable[File]:
+    def search_files(self, keyword: str, dir_id: str = '0') -> Iterable[File]:
+        """Search files with keyword under a directory.
+
+        Args:
+            keyword (str): Keyword to search file.
+
+            dir_id (str): Directory ID where to search files.
+
+        Yields:
+            File: A file object matches the keyword.
+        """
         spec = FileSearchApi(
                 keyword=keyword,
                 dir_id=dir_id,
-                offset=0,
-                limit=24
+                offset=0
             )
         while True:
             result = self._lac.call_api(spec)
             yield from result.files
             spec.offset += result.limit
             if spec.offset >= result.count: break
+
+    def remove_files(self, *file_ids: str):
+        """Remove files from cloud.
+
+        Args:
+            *file_ids (str): File IDs to remove.
+        """
+        self._lac.call_api(FileDeleteApi(file_ids))
+
+    def make_dir(self, parent_id: str, name: str) -> str:
+        """
+        """
+        return self._lac.call_api(DirMakeApi(
+            parent_id=parent_id,
+            dir_name=name
+        ))
+
+    def request_download(self, pickcode: str) -> DownloadTicket:
+        """Generate a downlaod ticket which contains all required information
+        to download a file.
+
+        Args:
+            pickcode (str): Pickcode of file.
+        
+        Returns:
+            DownloadTicket: Ticket to download files.
+        """
+        dr = self._lac.call_api(DownloadApi(pickcode=pickcode))
+        ticket = DownloadTicket(
+            url=dr.url,
+            file_name=dr.file_name,
+            file_size=dr.file_size
+        )
+        # Fill required headers
+        ticket.headers['User-Agent'] = self._lac.user_agent
+        cookies = self._lac.export_cookies(target_url=dr.url)
+        if len(cookies) > 0:
+            ticket.headers['Cookie'] = '; '.join([
+                f'{name}={value}' for name, value in cookies.items()
+            ])
+        return ticket
+
+    def request_upload(
+            self, 
+            dir_id: str, 
+            file_path: str
+        ) -> str | UploadTicket:
+        """
+        Try upload files to cloud.
+
+        Args:
+            dir_id (str): Directory ID on cloud to save the file.
+            file_path (str): Local file path to upload.
+
+        Returns:
+            str|UploadTicket: 
+                When str, it's the pickcode of the rapid-uploaded file.
+                Or the upload ticket which contains all required information to 
+                upload file to cloud.
+        """
+        save_name = ospath.basename(file_path)
+        with open(file_path, 'rb') as fp:
+            return self.request_upload_stream(dir_id, save_name, fp)
+
+    def request_upload_stream(
+            self, 
+            dir_id: str,
+            save_name: str,
+            stream: BinaryIO
+        ) -> str | UploadTicket:
+        """
+        Try upload data as a file to cloud.
+
+        Args:
+            dir_id (str): Directory ID on cloud to save the file.
+            save_name (str): File name to save data on cloud.
+            stream (BinaryIO): Data stream.
+
+        Returns:
+            str|UploadTicket: 
+                When str, it's the pickcode of the rapid-uploaded data.
+                Or the upload ticket which contains all required information to 
+                upload data to cloud.
+        """
+        if not stream.seekable():
+            # TODO: Use custom exception
+            raise Exception('Can not upload unseekable stream!')
+        dr = digest(stream)
+        spec = UploadInitApi(
+            self._lcp, dir_id, save_name, dr.size, dr.sha1
+        )
+        result = self._lac.call_api(spec)
+        while True:
+            if isinstance(result, UploadInitSignResult):
+                spec.update_token(
+                    sign_key=result.sign_key,
+                    sign_value=digest_range(stream, result.sign_range)
+                )
+                result = self._lac.call_api(spec)
+            elif isinstance(result, UploadInitDoneResult):
+                return result.pickcode
+            elif isinstance(result, UploadInitOssResult):
+                token = self._lac.call_api(UploadTokenApi())
+                return UploadTicket(
+                    region=oss.REGION,
+                    endpoint=oss.ENDPOINT,
+                    access_key_id=token.access_key_id,
+                    access_key_secret=token.access_key_secret,
+                    security_token=token.security_token,
+                    bucket_name=result.bucket,
+                    object_key=result.object,
+                    callback=result.callback,
+                    callback_var=result.callback_var,
+                    expiration=token.expiration
+                )
 
 
 class Cloud:
@@ -101,7 +245,7 @@ class Cloud:
         if app_ver is None:
             avr = self._lac.call_api(AppVersionApi())
             app_ver = avr.get(AppName.BROWSER_WINDOWS).version_code
-        self._lac.set_user_agent(f'Mozilla/5.0 115Browser/{app_ver}')
+        self._lac.add_to_user_agent(f'115Browser/{app_ver}')
         self._lcp = CommonParams(app_ver)
         # Set credential
         if credential is not None:

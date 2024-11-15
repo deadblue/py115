@@ -1,7 +1,9 @@
 __author__ = 'deadblue'
 
 from py115.lowlevel.types.dir import DirOrder
-from ._base import JsonApiSpec, JsonResult, VoidApiSpec
+from ._base import (
+    JsonApiSpec, JsonResult, VoidApiSpec
+)
 
 
 class DirMakeApi(JsonApiSpec[str]):
@@ -27,7 +29,7 @@ class DirSetOrderApi(VoidApiSpec):
         )
         self.form.update({
             'file_id': dir_id,
-            'user_order': order.value,
+            'user_order': order,
             'user_asc': '1' if is_asc else '0',
             'fc_mix': 0
         })

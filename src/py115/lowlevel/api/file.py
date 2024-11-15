@@ -1,5 +1,6 @@
 __author__ = 'deadblue'
 
+from abc import ABC
 from typing import Dict, Sequence
 
 from py115.lowlevel.exceptions import RetryException
@@ -13,15 +14,22 @@ from ._base import (
 from ._error import FILE_ORDER_INVALID
 
 
-class BaseFileListApi(JsonApiSpec[FileListResult]):
+DEFAULT_FILE_LIST_LIMIT = 32
+
+
+class BaseFileListApi(JsonApiSpec[FileListResult], ABC):
 
     _offset: int = 0
     _limit: int = 0
 
-    def __init__(self, api_url: str, offset: int, limit: int):
+    def __init__(
+            self, 
+            api_url: str, 
+            offset: int, 
+            limit: int
+        ):
         super().__init__(api_url)
-        self._offset = offset
-        self._limit = limit
+        self._offset, self._limit = offset, limit
         self.query.update({
             'offset': str(offset),
             'limit': str(limit)
@@ -57,11 +65,15 @@ class BaseFileListApi(JsonApiSpec[FileListResult]):
 
 class FileListApi(BaseFileListApi):
 
-    _order: DirOrder = DirOrder.CREATED_TIME
+    _order: DirOrder = 'user_ptime'
 
-    def __init__(self, dir_id: str, offset: int = 0, limit: int = 115) -> None:
+    def __init__(
+            self, 
+            dir_id: str, 
+            offset: int = 0, 
+            limit: int = DEFAULT_FILE_LIST_LIMIT
+        ) -> None:
         super().__init__('', offset, limit)
-        self._order = 'user_ptime'
         self.query.update({
             'aid': '1',
             'cid': dir_id,
@@ -98,7 +110,7 @@ class FileSearchApi(BaseFileListApi):
             keyword: str, 
             dir_id: str = '0', 
             offset: int = 0, 
-            limit: int = 115,
+            limit: int = DEFAULT_FILE_LIST_LIMIT,
             *,
             file_type: FileType | None = None
         ) -> None:
@@ -123,7 +135,7 @@ class FileStaredApi(BaseFileListApi):
     def __init__(
             self, 
             offset: int = 0, 
-            limit: int = 115,
+            limit: int = DEFAULT_FILE_LIST_LIMIT,
             *,
             file_type: FileType | None = None
         ) -> None:
@@ -150,7 +162,7 @@ class FileLabeledApi(BaseFileListApi):
             self, 
             label_id: str,
             offset: int = 0, 
-            limit: int = 115,
+            limit: int = DEFAULT_FILE_LIST_LIMIT,
             *,
             file_type: FileType | None = None
         ) -> None:

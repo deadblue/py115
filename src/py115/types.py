@@ -86,10 +86,7 @@ class Credential:
 @dataclass(init=False)
 class DownloadTicket:
     """
-    DownloadTicket contains required parameters to download a file from 
-    cloud storage.
-
-    Please check examples for detail usage.
+    DownloadTicket contains required parameters to download a file from storage.
     """
 
     file_name: str
@@ -101,7 +98,7 @@ class DownloadTicket:
     url: str
     """Download URL."""
 
-    headers: dict
+    headers: Dict[str, str]
     """Required headers that should be used with download URL."""
 
     def __init__(self, url: str, file_name: str, file_size: int) -> None:
@@ -125,50 +122,36 @@ class PlayTicket:
         self.headers = {}
 
 
-@dataclass(init=False)
+@dataclass(kw_only=True)
 class UploadTicket:
     """
     UploadTicket contains required parameters to upload a file to 
     cloud storage.
-
-    Please check examples for detial usage.
     """
 
-    is_done: bool
-    """Is file already uploaded."""
+    region: str
 
-    pickcode: Optional[str]
-    """Pick-code to download file."""
+    endpoint: str
 
-    oss_endpoint: str
-    """OSS endpoint address."""
+    access_key_id: str
 
-    oss_key_id: str
+    access_key_secret: str
 
-    oss_key_secret: str
-
-    oss_security_token: str
+    security_token: str
 
     bucket_name: str
-    """OSS bucket name."""
 
     object_key: str
-    """OSS object key."""
 
-    callback_url: str
+    callback: str
 
     callback_var: str
 
-    expiration: datetime
+    expiration: int
     """Expiration time of this ticket."""
 
-    def __new__(cls) -> "UploadTicket":
-        ret = object.__new__(cls)
-        # TODO: Fill fields
-        return ret
-
     def __bool__(self) -> bool:
-        return datetime.now() < self.expiration
+        return datetime.now().timestamp < self.expiration
 
 
 __all__ = [

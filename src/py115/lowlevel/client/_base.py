@@ -22,6 +22,7 @@ C = TypeVar('C', httpx.Client, httpx.AsyncClient)
 
 class BaseClient(Generic[C], ABC):
 
+    _ua: str = DEFAULT_USER_AGNET
     _ecc: Cipher
     _jar: LowlevelCookieJar
     _hc: C
@@ -39,7 +40,7 @@ class BaseClient(Generic[C], ABC):
         # Create HTTP client
         self._hc = hc_cls(
             headers={
-                'User-Agent': DEFAULT_USER_AGNET
+                'User-Agent': self._ua
             },
             cookies=self._jar,
             limits=httpx.Limits(
@@ -76,8 +77,13 @@ class BaseClient(Generic[C], ABC):
             result[cookie.name] = cookie.value
         return result
 
-    def set_user_agent(self, user_agent: str):
-        self._hc.headers['User-Agent'] = user_agent
+    @property
+    def user_agent(self) -> str:
+        return self._ua
+
+    def add_to_user_agent(self, extension: str):
+        self._ua = f'{self._ua} {extension}'
+        self._hc.headers['User-Agent'] = self._ua
 
     def _prepare_request(self, spec: ApiSpec) -> httpx.Request:
         method, headers, content = 'GET', {}, None
