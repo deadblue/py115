@@ -1,7 +1,6 @@
 __author__ = 'deadblue'
 
 import os.path as ospath
-from re import S
 from typing import (
     Any, Dict, Iterable, Tuple, BinaryIO
 )
@@ -47,7 +46,7 @@ class OfflineService:
             if page_num > result.page_count:
                 break
 
-    def add(self, *urls: str, save_dir_id: str | None = None):
+    def add_urls(self, *urls: str, save_dir_id: str | None = None):
         if len(urls) == 0: return
         self._lac.call_api(OfflineAddUrlsApi(
             self._lcp, 
@@ -112,16 +111,37 @@ class StorageService:
             spec.offset += result.limit
             if spec.offset >= result.count: break
 
+    def move_files(self, target_dir_id: str, *file_ids: str):
+        if len(file_ids) > 0:
+            self._lac.call_api(FileMoveApi(
+                target_dir_id, file_ids
+            ))
+
     def remove_files(self, *file_ids: str):
         """Remove files from cloud.
 
         Args:
-            *file_ids (str): File IDs to remove.
+            *file_ids (str): ID of files to remove.
         """
-        self._lac.call_api(FileDeleteApi(file_ids))
+        if len(file_ids) > 0:
+            self._lac.call_api(FileDeleteApi(file_ids))
+
+    def rename_file(self, file_id: str, new_name: str):
+        """Rename file.
+        """
+        self._lac.call_api(FileBatchRenameApi({
+            file_id: new_name
+        }))
 
     def make_dir(self, parent_id: str, name: str) -> str:
-        """
+        """Make a directory under parent directory.
+
+        Args:
+            parent_id (str): Parent Directory ID.
+            name (str): Base name of new directroy.
+        
+        Returns:
+            str: Created directory ID.
         """
         return self._lac.call_api(DirMakeApi(
             parent_id=parent_id,
@@ -352,11 +372,11 @@ class Cloud:
         return StorageService(self._lac, self._lcp)
 
     def lowlevel(self) -> Tuple[Client, CommonParams]:
-        """Get lowlevel client and parameters
+        """Export lowlevel client and parameters
 
         Returns:
-            py115.lowlevel.Client: Low-level client for API calling.
-            py115.lowlevel.types.CommonParams: Common-used parameters for low-leve API.
+            Client: Low-level API client.
+            CommonParams: Common-used parameters for low-leve API.
         """
         return (self._lac, self._lcp)
 

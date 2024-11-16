@@ -2,7 +2,7 @@
 
 A Python API SDK of 115 cloud storage service.
 
-**Working on version 0.1.x.**
+**Version 0.1.x is under development.**
 
 ## Example
 
@@ -28,7 +28,7 @@ offline = cloud.offline()
 for task in offline.list():
     print('Task: %r' % task)
 # Add task by download URLs
-offline.add(
+offline.add_urls(
     'magnet:?xt=urn:btih:000123456789abcdef1151150123456789abcdef',
     'ed2k://|file|ED2k-file|115115115|1234567890abcdef1234567890abcdef|/',
     'https://dl.some-server.com/some/file.ext'
