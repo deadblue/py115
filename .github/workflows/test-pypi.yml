@@ -14,6 +14,8 @@ jobs:
     name: Build and publish
     runs-on: ubuntu-latest
     environment: test-pypi
+    permissions:
+      id-token: write
     steps:
     - name: Check out source
       uses: actions/checkout@v4
