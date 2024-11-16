@@ -1,44 +1,43 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = [ "hatchling" ]
+build-backend = "hatchling.build"
 
 [project]
 name = "py115"
-authors = [
-    {name = "deadblue", email = "public@dead.blue"}
-]
+dynamic = ["version"]
 description = "Python SDK for 115 cloud storage service."
-readme = "README.rst"
-license = { file = "LICENSE" }
 keywords = [
     "115", "cloud-storage", "sdk"
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    {name = "deadblue", email = "public@dead.blue"}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries",
 ]
-requires-python = ">=3.9"
-dynamic = ["dependencies", "version"]
+requires-python = ">=3.10"
+dependencies = [
+    "httpx >= 0.27.0",
+    "lz4 >= 4.0.0",
+    "pycryptodome >= 3.17.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/deadblue/py115"
 Documentation = "https://py115.readthedocs.io/en/latest/"
 
-[tool.setuptools]
-packages = [
-    "py115",
-    "py115._internal",
-    "py115._internal.api",
-    "py115._internal.crypto",
-    "py115._internal.protocol"
-]
+[tool.hatch.build.targets.wheel]
+packages = [ "src/py115" ]
 
-[tool.setuptools.dynamic]
-dependencies = {file = "requirements.txt"}
-version = {attr = "py115.VERSION"}
+[tool.hatch.version]
+path = "src/py115/__about__.py"
