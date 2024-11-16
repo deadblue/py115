@@ -9,7 +9,7 @@ description = "Python SDK for 115 cloud storage service."
 keywords = [
     "115", "cloud-storage", "sdk"
 ]
-readme = "README.rst"
+readme = "README.md"
 license = { file = "LICENSE" }
 authors = [
     {name = "deadblue", email = "public@dead.blue"}
