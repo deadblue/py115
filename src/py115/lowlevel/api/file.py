@@ -273,7 +273,7 @@ class FileBatchRemoveLabelsApi(VoidApiSpec):
         })
 
 
-class FileSetDescriptionApi(VoidApiSpec):
+class FileSetDescApi(VoidApiSpec):
 
     def __init__(self, file_id: str, description: str) -> None:
         super().__init__('https://webapi.115.com/files/edit')
@@ -283,7 +283,7 @@ class FileSetDescriptionApi(VoidApiSpec):
         })
 
 
-class FileGetDescriptionApi(JsonApiSpec[str]):
+class FileGetDescApi(JsonApiSpec[str]):
 
     def __init__(self, file_id: str) -> None:
         super().__init__('https://webapi.115.com/files/desc')
