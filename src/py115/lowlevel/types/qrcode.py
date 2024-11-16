@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import IntEnum
 from typing import Dict
 
-from py115.compat import StrEnum
+from py115._internal.compat import StrEnum
 
 
 class QrcodeClient(StrEnum):

@@ -3,7 +3,7 @@ __author__ = 'deadblue'
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
-from py115.compat import StrEnum
+from py115._internal.compat import StrEnum
 
 
 @dataclass
