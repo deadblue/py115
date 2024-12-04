@@ -24,9 +24,7 @@ class DirMakeApi(JsonApiSpec[str]):
 class DirSetOrderApi(VoidApiSpec):
 
     def __init__(self, dir_id: str, order: DirOrder, is_asc: bool) -> None:
-        super().__init__(
-            api_url='https://webapi.115.com/files/order'
-        )
+        super().__init__('https://webapi.115.com/files/order')
         self.form.update({
             'file_id': dir_id,
             'user_order': order,

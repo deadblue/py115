@@ -45,7 +45,7 @@ class UploadInitApi(JsonApiSpec[UploadInitResult]):
             sign_key: str = '', 
             sign_value: str = '',
         ) -> None:
-        super().__init__('https://uplb.115.com/4.0/initupload.php', True)
+        super().__init__('https://uplb.115.com/4.0/initupload.php')
         self._cp = cp
         target_id = _to_target_id(dir_id)
         self.form.update({
@@ -72,6 +72,10 @@ class UploadInitApi(JsonApiSpec[UploadInitResult]):
                 'sign_val': sign_value
             })
         self._set_token()
+
+    @property
+    def use_ec(self) -> bool:
+        return True
 
     def _set_token(self):
         file_sha1 = self.form.get('fileid')

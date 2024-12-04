@@ -2,13 +2,14 @@ __author__ = 'deadblue'
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Optional, TypeAlias
+from typing import Dict, TypeAlias
 
 from py115.lowlevel.types import (
     QrcodeClient, 
     FileInfo,
     TaskStatus,
-    TaskInfo
+    TaskInfo,
+    OfflineClearFlag,
 )
 
 
@@ -158,5 +159,6 @@ __all__ = [
     'QrcodeClient',
     'File',
     'TaskStatus',
-    'Task'
+    'Task',
+    'OfflineClearFlag'
 ]

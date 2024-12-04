@@ -2,6 +2,7 @@ __author__ = 'deadblue'
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from math import fabs
 from typing import Dict, Generic, TypeVar
 
 
@@ -39,14 +40,12 @@ class ApiSpec(Generic[R], ABC):
     """
 
     _api_url: str
-    _use_ec: bool
     _timeout: ApiTimeout
     query: Dict[str, str]
     form: Dict[str, str]
 
-    def __init__(self, api_url: str, use_ec: bool) -> None:
+    def __init__(self, api_url: str) -> None:
         self._api_url = api_url
-        self._use_ec = use_ec
         self._timeout = ApiTimeout(
             connect=5.0, read=5.0
         )
@@ -54,13 +53,18 @@ class ApiSpec(Generic[R], ABC):
         self.form = {}
 
     @property
-    def use_ec(self) -> bool:
-        return self._use_ec
-
-    @property
     def timeout(self) -> ApiTimeout:
         return self._timeout
 
+    @property
+    def use_ec(self) -> bool:
+        """
+        Indicate whether API uses ECC crypto or not.
+        Child class which requires ECC crypto, should override this method.
+        """
+        return False
+
+    @property
     def url(self) -> str:
         return self._api_url
 
