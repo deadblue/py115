@@ -105,7 +105,7 @@ class BaseClient(Generic[C], ABC):
         )
         return self._hc.build_request(
             method=method,
-            url=spec.url(),
+            url=spec.url,
             params=spec.query,
             headers=headers,
             content=content,

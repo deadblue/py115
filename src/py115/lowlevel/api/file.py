@@ -85,6 +85,7 @@ class FileListApi(BaseFileListApi):
             'format': 'json'
         })
 
+    @property
     def url(self) -> str:
         if self._order == 'file_name':
             return 'https://aps.115.com/natsort/files.php'

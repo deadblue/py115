@@ -22,8 +22,8 @@ JsonResult: TypeAlias = Dict[str, Any]
 
 class JsonApiSpec(ApiSpec[R], ABC):
 
-    def __init__(self, api_url: str, use_ec: bool = False) -> None:
-        super().__init__(api_url, use_ec)
+    def __init__(self, api_url: str) -> None:
+        super().__init__(api_url)
 
     def payload(self) -> Payload | None:
         if len(self.form) > 0:
@@ -57,8 +57,8 @@ class JsonApiSpec(ApiSpec[R], ABC):
 
 class VoidApiSpec(JsonApiSpec[bool], ABC):
 
-    def __init__(self, api_url: str, use_ec: bool = False) -> None:
-        super().__init__(api_url, use_ec)
+    def __init__(self, api_url: str) -> None:
+        super().__init__(api_url)
 
     def _parse_json_result(self, _: JsonResult) -> bool:
         return True
@@ -68,8 +68,8 @@ class M115ApiSpec(JsonApiSpec[R], ABC):
 
     _mkey: bytes
 
-    def __init__(self, api_url: str, use_ec: bool = False) -> None:
-        super().__init__(api_url, use_ec)
+    def __init__(self, api_url: str) -> None:
+        super().__init__(api_url)
         self._mkey = m115.generate_key()
 
     def payload(self) -> Payload | None:

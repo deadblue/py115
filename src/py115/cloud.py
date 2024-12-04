@@ -16,16 +16,18 @@ from py115.lowlevel.types import (
     AppName, 
     QrcodeClient, 
     QrcodeStatus,
+    OfflineClearFlag,
     UploadInitOssResult,
     UploadInitDoneResult, 
     UploadInitSignResult
 )
 from py115.types import (
-    Credential, 
+    Credential,
     QrcodeSession, 
     File, Task, 
     DownloadTicket, 
-    UploadTicket
+    UploadTicket,
+    PlayTicket
 )
 
 
@@ -60,6 +62,9 @@ class OfflineService:
             info_hashes=task_ids, 
             delete_files=delete_files
         ))
+
+    def clear(self, flag: OfflineClearFlag = OfflineClearFlag.DONE):
+        self._lac.call_api(OfflineClearApi(flag))
 
 
 class StorageService:
@@ -182,7 +187,7 @@ class StorageService:
         Try upload files to cloud.
 
         Args:
-            dir_id (str): Directory ID on cloud to save the file.
+            dir_id (str): Remote directory ID to save the file.
             file_path (str): Local file path to upload.
 
         Returns:
@@ -205,7 +210,7 @@ class StorageService:
         Try upload data as a file to cloud.
 
         Args:
-            dir_id (str): Directory ID on cloud to save the file.
+            dir_id (str): Remote directory ID to save the file.
             save_name (str): File name to save data on cloud.
             stream (BinaryIO): Data stream.
 
@@ -242,10 +247,32 @@ class StorageService:
                     security_token=token.security_token,
                     bucket_name=result.bucket,
                     object_key=result.object,
-                    callback=result.callback,
-                    callback_var=result.callback_var,
+                    callback=oss.encode_header_value(
+                        oss.replace_callback_sha1(result.callback, dr.sha1)
+                    ),
+                    callback_var=oss.encode_header_value(result.callback_var),
                     expiration=token.expiration
                 )
+    
+    def request_play(self, pickcode: str) -> PlayTicket:
+        """Generate a play ticket which contains all required information
+        to download a video file.
+
+        Args:
+            pickcode (str): Pickcode of video file.
+        
+        Returns:
+            PlayTicket: Ticket to play video file.
+        """
+        result = self._lac.call_api(VideoPlayWebApi(pickcode=pickcode))
+        ticket = PlayTicket(result.play_url)
+        ticket.headers['User-Agent'] = self._lac.user_agent
+        cookies = self._lac.export_cookies(target_url=result.play_url)
+        if len(cookies) > 0:
+            ticket.headers['Cookie'] = '; '.join([
+                f'{name}={value}' for name, value in cookies.items()
+            ])
+        return ticket
 
 
 class Cloud:

@@ -11,9 +11,7 @@ from ._base import JsonApiSpec, JsonResult
 
 class ImageLinkApi(JsonApiSpec[ImageInfo]):
     def __init__(self, pickcode: str) -> None:
-        super().__init__(
-            'https://webapi.115.com/files/image'
-        )
+        super().__init__('https://webapi.115.com/files/image')
         self.query.update({
             'pickcode': pickcode,
             '_': now_str()
@@ -25,7 +23,6 @@ class ImageLinkApi(JsonApiSpec[ImageInfo]):
             file_name=data_obj['file_name'],
             origin_url=data_obj['origin_url']
         )
-
 
 
 class VideoPlayWebApi(JsonApiSpec[VideoInfo]):

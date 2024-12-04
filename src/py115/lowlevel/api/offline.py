@@ -87,7 +87,9 @@ class OfflineAddUrlsApi(M115ApiSpec[List[OfflineAddResult]]):
             urls: Sequence[str],
             save_dir_id: str | None = None
         ) -> None:
-        super().__init__('https://lixian.115.com/lixianssp/?ac=add_task_urls')
+        super().__init__(
+            'https://lixian.115.com/lixianssp/?ac=add_task_urls'
+        )
         self.form.update({
             'ac': 'add_task_urls',
             'app_ver': cp.app_ver,
