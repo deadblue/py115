@@ -61,6 +61,11 @@ class Credential:
     "CID" cookie value.
     """
 
+    kid: str | None
+    """
+    "KID" cookie value.
+    """
+
     seid: str | None
     """
     "SEID" cookie value.
@@ -75,7 +80,8 @@ class Credential:
         return {
             'UID': self.uid,
             'CID': self.cid,
-            'SEID': self.seid,
+            'KID': self.kid,
+            'SEID': self.seid
         }
 
     def __bool__(self) -> bool:

@@ -13,6 +13,7 @@ from py115 import Cloud
 cloud = Cloud(credential={
     'UID':  'UID-value-in-cookie',
     'CID':  'CID-value-in-cookie',
+    'KID':  'KID-value-in-cookie',
     'SEID': 'SEID-value-in-cookie',
 })
 

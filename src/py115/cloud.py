@@ -325,12 +325,13 @@ class Cloud:
         """Export current credentail from cloud instance.
 
         Return:
-            py115.types.Credential: Credential object, or None when credential is invalid.
+            Credential: Credential object, or None when credential is invalid.
         """
         cookies = self._lac.export_cookies()
         cred = Credential(
             uid=cookies.get('UID', None),
             cid=cookies.get('CID', None),
+            kid=cookies.get('KID', None),
             seid=cookies.get('SEID', None)
         )
         return cred if cred else None
@@ -423,6 +424,6 @@ def _convert_to_cookies(credential: Any) -> Dict[str, str] | None:
     cookies = {}
     for key, value in raw.items():
         key = key.upper()
-        if key in ('UID', 'CID', 'SEID'):
+        if key in ('UID', 'CID', 'KID', 'SEID'):
             cookies[key] = str(value)
     return cookies
